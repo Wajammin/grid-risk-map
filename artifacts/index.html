@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>배전망 위험 지도</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F4F6F8;--sf:#fff;--sf2:#EEF1F4;--bd:#E2E6EB;
+  --tx:#0F172A;--tx2:#64748B;--tx3:#94A3B8;--ac:#1D4ED8;--acs:#EFF6FF;
+  --rd:#DC2626;--am:#D97706;--gn:#059669;--r:10px;
+  --hdr:52px;--panel:min(440px,42vw);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;height:100dvh}
+body{
+  font-family:Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.header{height:var(--hdr);background:var(--sf);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:8px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:8px;min-width:0}
+.brand-icon{width:26px;height:26px;background:var(--tx);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.brand-icon svg{width:13px;height:13px;color:#fff}
+.brand h1{font-size:13px;font-weight:600;white-space:nowrap}
+.brand p{font-size:10px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ha{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.btn-g{border:1px solid var(--bd);background:var(--sf);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:inherit}
+.live{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);background:var(--sf2);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
+.dot.on{background:var(--gn);box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+.app{display:flex;height:calc(100% - var(--hdr));min-height:0}
+.map-wrap{flex:1 1 58%;position:relative;background:#D7E3EE;min-width:0;min-height:0;overflow:hidden}
+#map{width:100%;height:100%;display:none}
+#svg-map{width:100%;height:100%;display:block}
+#svg-map svg{width:100%;height:100%}
+.sido-path{stroke:#fff;stroke-width:1.2;cursor:pointer;transition:fill .15s,stroke-width .15s}
+.sido-path:hover{stroke:#0F172A;stroke-width:2}
+.sido-path.active{stroke:#1D4ED8;stroke-width:2.4}
+.sido-lab{
+  font-family:Pretendard,system-ui,sans-serif;font-weight:700;font-size:13px;
+  fill:#0F172A;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round;
+  pointer-events:none;user-select:none;
+}
+.sido-lab.sm{font-size:11px}
+.sgg-dot{stroke:#fff;stroke-width:1.4;cursor:pointer}
+.sgg-lab{
+  font-family:Pretendard,system-ui,sans-serif;font-weight:600;font-size:10px;
+  fill:#0F172A;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;
+  pointer-events:none;white-space:nowrap;
+}
+.kakao-chip{position:absolute;top:10px;right:10px;z-index:12;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:min(420px,70%)}
+.kakao-chip input{width:160px;max-width:42vw;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;font-size:11px;font-family:inherit;background:#fff}
+.mf{position:absolute;z-index:10;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:0 1px 4px rgba(15,23,42,.06)}
+.filters{top:10px;left:10px;display:flex;padding:3px;flex-wrap:wrap;max-width:calc(100% - 20px)}
+.filters button{border:none;background:0;padding:6px 9px;border-radius:6px;font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.filters button.active{background:var(--sf2);color:var(--tx);font-weight:600}
+.scenario{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 12px}
+.scenario button{
+  border:1px solid var(--bd);background:var(--sf);padding:9px 6px;border-radius:10px;
+  font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;
+}
+.scenario button.active{background:var(--tx);color:#fff;border-color:var(--tx)}
+.legend{bottom:10px;left:10px;display:block;padding:8px 10px}
+.legend h3{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.lr{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);margin-bottom:2px;white-space:nowrap}
+.sw{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.panel{width:var(--panel);flex:0 0 var(--panel);background:var(--sf);border-left:1px solid var(--bd);display:flex;flex-direction:column;min-height:0;min-width:0}
+.tabs{display:flex;border-bottom:1px solid var(--bd);padding:0 2px;flex-shrink:0}
+.tab{flex:1;padding:10px 2px;border:none;background:0;font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.active{color:var(--tx);font-weight:600;border-bottom-color:var(--tx)}
+.pb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px}
+.bc{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:var(--tx2);margin-bottom:8px}
+.bc button{border:none;background:0;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;white-space:nowrap}
+.k{font-size:11px;color:var(--tx2);margin-bottom:3px}
+.big{font-size:clamp(28px,5vw,40px);font-weight:600;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.b-d{background:#FEF2F2;color:var(--rd)}.b-w{background:#FFFBEB;color:var(--am)}.b-o{background:#ECFDF5;color:var(--gn)}.b-m{background:#FFF7ED;color:#EA580C}
+.t{font-size:15px;font-weight:600;margin:4px 0}
+.d{font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5}
+.sec{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stat{background:var(--sf2);border-radius:8px;padding:8px;text-align:center}
+.stat label{display:block;font-size:10px;color:var(--tx2);white-space:nowrap}
+.stat strong{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{display:block;font-size:10px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:6px 0}
+.gbar i{display:block;height:100%}
+.gleg{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:11px;color:var(--tx2)}
+.gleg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sc{border:1px solid var(--bd);border-radius:8px;padding:10px;cursor:pointer;background:var(--sf);text-align:left;font-family:inherit;width:100%}
+.sc:hover{border-color:#93C5FD;background:var(--acs)}
+.sc b{display:block;font-size:12px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc span{font-size:11px;color:var(--tx2)}
+.item{display:flex;align-items:center;gap:8px;padding:8px;border-radius:7px;cursor:pointer}
+.item:hover{background:var(--sf2)}
+.item .dotc{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.item .nm{flex:1;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .scor{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.metric{background:var(--sf2);border-radius:8px;padding:10px}
+.metric label{font-size:10px;color:var(--tx2);display:block}
+.metric strong{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.chart{background:var(--sf2);border-radius:8px;padding:8px;height:140px}
+.chart canvas{width:100%!important;height:100%!important}
+.box{background:var(--sf2);border-radius:8px;padding:12px;font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:8px}
+.box h4{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.box code{display:block;background:#fff;border:1px solid var(--bd);padding:8px;border-radius:6px;font-size:11px;color:var(--tx);margin:6px 0;font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap;line-height:1.45}
+.notice{background:var(--sf2);border-radius:8px;padding:10px;font-size:11px;color:var(--tx2);line-height:1.5;margin-top:10px}
+.search{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;font-size:12px;font-family:inherit;margin-bottom:10px;background:var(--sf2)}
+.back{border:none;background:var(--sf2);color:var(--tx2);font-size:12px;padding:5px 9px;border-radius:6px;cursor:pointer;font-family:inherit;margin-bottom:8px}
+.pin{border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer;pointer-events:auto}
+.lbl{
+  display:inline-block;padding:3px 8px;background:rgba(15,23,42,.92);color:#fff;
+  border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0;
+  white-space:nowrap;overflow:visible;max-width:none;width:auto;
+  line-height:1.2;cursor:pointer;pointer-events:auto;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+}
+.lbl.full{font-size:11px}
+.err{position:absolute;bottom:10px;right:10px;z-index:13;background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;border-radius:8px;padding:8px 10px;font-size:11px;max-width:240px;display:none}
+@media (max-width:1024px){ :root{--panel:min(400px,40vw)} }
+@media (max-width:860px){
+  .app{flex-direction:column}
+  .map-wrap{flex:1 1 46%;height:46%}
+  .panel{flex:1 1 54%;width:100%;height:54%;border-left:none;border-top:1px solid var(--bd)}
+  .brand p{display:none}
+  .kakao-chip{top:auto;bottom:10px;right:10px;left:auto;max-width:none}
+  .kakao-chip input{width:110px}
+  .filters{max-width:calc(100% - 16px)}
+}
+@media (max-width:480px){
+  .header{padding:0 10px}
+  .pb{padding:12px 12px 20px}
+  .sg{grid-template-columns:1fr}
+  .filters{max-width:68%}
+  .legend{transform:scale(.92);transform-origin:bottom left}
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <div><h1>배전망 위험 지도</h1><p>설비 용량 대비 부하 · 229개 시·군·구</p></div>
+  </div>
+  <div class="ha">
+    <button type="button" class="btn-g" id="btn-home">전국</button>
+    <div class="live"><span class="dot on" id="dot"></span><span id="live-t">전국 지도</span></div>
+  </div>
+</header>
+<div class="app">
+  <div class="map-wrap">
+    <div id="svg-map" aria-label="전국 배전망 위험 지도"></div>
+    <div id="map"></div>
+    <div class="mf filters" id="filters">
+      <button type="button" class="active" data-f="all">전체</button>
+      <button type="button" data-f="high">위험·경계</button>
+      <button type="button" data-f="mid">주의</button>
+      <button type="button" data-f="low">관심↓</button>
+    </div>
+    <div class="kakao-chip">
+      <input type="password" id="kk" placeholder="카카오 JS 키" autocomplete="off" aria-label="카카오 JavaScript 키"/>
+      <button type="button" class="btn-g" id="bk" style="background:var(--tx);color:#fff;border:none">카카오맵</button>
+    </div>
+    <div class="mf legend" id="legend">
+      <h3>등급</h3>
+      <div class="lr"><span class="sw" style="background:#A7F3D0"></span>0–20 안전</div>
+      <div class="lr"><span class="sw" style="background:#6EE7B7"></span>20–40 관심</div>
+      <div class="lr"><span class="sw" style="background:#FCD34D"></span>40–60 주의</div>
+      <div class="lr"><span class="sw" style="background:#FB923C"></span>60–80 경계</div>
+      <div class="lr"><span class="sw" style="background:#F87171"></span>80–100 위험</div>
+    </div>
+    <div class="err" id="map-err"></div>
+  </div>
+  <aside class="panel">
+    <div class="tabs">
+      <button type="button" class="tab active" data-t="board">상황판</button>
+      <button type="button" class="tab" data-t="sel">지역</button>
+      <button type="button" class="tab" data-t="det">상세</button>
+      <button type="button" class="tab" data-t="met">산출식</button>
+      <button type="button" class="tab" data-t="valid">검증</button>
+      <button type="button" class="tab" data-t="api">API</button>
+    </div>
+    <div class="pb">
+      <div id="v-board">
+        <div class="k">즉시 점검이 필요한 지역</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
+          <span class="big" id="st-urgent">—</span>
+          <span class="badge b-d">위험·경계</span>
+        </div>
+        <div class="t">전국 통합 상황판</div>
+        <p class="d">전국 시·군·구 우선점검 점수 분포입니다. 지도 또는 목록에서 지역을 고르면 상세로 이동합니다.</p>
+        <div class="stats">
+          <div class="stat"><label>전국 평균</label><strong id="st-avg">—</strong><span>점</span></div>
+          <div class="stat"><label>최위험</label><strong id="st-top" style="font-size:13px">—</strong><span id="st-tops">—</span></div>
+          <div class="stat"><label>분석 단위</label><strong id="st-n">—</strong><span>개</span></div>
+        </div>
+        <div class="sec">수요 증가 시나리오</div>
+        <p class="d" style="margin-bottom:6px">부하가 늘면 우선점검 점수가 어떻게 바뀌는지 봅니다.</p>
+        <div class="scenario" id="growth">
+          <button type="button" class="active" data-g="0">현재</button>
+          <button type="button" data-g="5">+5%</button>
+          <button type="button" data-g="10">+10%</button>
+          <button type="button" data-g="20">+20%</button>
+        </div>
+        <div class="sec">등급 분포</div>
+        <div class="gbar" id="gbar"></div>
+        <div class="gleg" id="gleg"></div>
+        <div class="sec">우선 점검 TOP 8</div>
+        <div id="top8"></div>
+        <div class="notice"><b style="color:var(--tx)">해석 안내 </b>점수는 고장 확률이 아니라 우선 점검 순서입니다. 시군구 값은 공개 통계 패턴 기반 프로토타입입니다.</div>
+      </div>
+      <div id="v-sel" style="display:none">
+        <div class="bc" id="bc"></div>
+        <input class="search" id="q" placeholder="검색 (강동구, 여수시, 경상남도)"/>
+        <div id="nation">
+          <div class="k">17개 시·도</div>
+          <div class="t">시·도를 선택하세요</div>
+          <div class="sg" id="sido-g"></div>
+        </div>
+        <div id="sido-v" style="display:none">
+          <div class="k">시·군·구</div>
+          <div class="t" id="st">—</div>
+          <button type="button" class="sc" id="sido-all"><b id="sa-n">시·도 전체</b><span id="sa-s">—</span></button>
+          <div id="sgg-l" style="margin-top:6px"></div>
+        </div>
+      </div>
+      <div id="v-det" style="display:none">
+        <button type="button" class="back" id="bb">← 돌아가기</button>
+        <div class="k">우선점검 점수 (0–100)</div>
+        <div style="display:flex;align-items:baseline;gap:8px"><span class="big" id="score">—</span><span class="badge b-d" id="badge">—</span></div>
+        <div class="t" id="rn">—</div>
+        <p class="d" id="rd"></p>
+        <div class="sec">지표</div>
+        <div class="metrics">
+          <div class="metric"><label>격차 G</label><strong id="mg">—</strong></div>
+          <div class="metric"><label>여름 피크 P</label><strong id="mp">—</strong></div>
+          <div class="metric"><label>주택 비중 R</label><strong id="mr">—</strong></div>
+          <div class="metric"><label>상대근접도 C</label><strong id="mc">—</strong></div>
+        </div>
+        <div class="sec">가중 기여</div>
+        <div class="chart"><canvas id="cc"></canvas></div>
+      </div>
+      <div id="v-met" style="display:none">
+        <div class="k">학술 근거</div>
+        <div class="t">우선점검 점수 산출식</div>
+        <div class="box"><h4>1. 이론적 틀</h4>
+          <p>OECD/JRC 복합지표 핸드북(2008)의 정규화·가중·합산과 TOPSIS(Hwang &amp; Yoon, 1981) 상대근접도를 결합했습니다.</p></div>
+        <div class="box"><h4>2. 지표</h4>
+          <code>G = (1 + g_d) / (1 + g_s)
+P = E_78 / E_avg
+R = E_res / E_total</code></div>
+        <div class="box"><h4>3. 정규화 · 점수</h4>
+          <code>Ñ = (X − min) / (max − min)
+S' = 0.45Ñ_G + 0.35Ñ_P + 0.20Ñ_R
+Score = 100 × S'</code>
+          <p>이상해가 (1,1,1)이면 TOPSIS 근접도는 가중 합산과 같습니다. 점수는 확률이 아닙니다.</p></div>
+      </div>
+      <div id="v-valid" style="display:none">
+        <div class="k">실험성</div>
+        <div class="t">사고·민원 사례와 대조</div>
+        <p class="d">점수는 확률이 아닙니다. 아래는 공개 보도에 나온 부하·정전 사례와 이 지도의 우선순위가 같은 방향을 가리키는지 대조한 프로토타입 검증입니다.</p>
+        <div class="box"><h4>남양주시</h4><p>경기 동북부 부하 집중·반복 정전 보도와 동일하게 우선점검 상위권으로 나타납니다.</p></div>
+        <div class="box"><h4>군포시 · 광주시</h4><p>변압기·배전 설비 여유 부족이 보도된 지역과 격차 G·피크 P가 함께 높게 나옵니다.</p></div>
+        <div class="box"><h4>한계</h4><p>시군구 값은 공개 통계 패턴을 재현한 프로토타입입니다. 한전 변압기 용량 원자료가 연결되면 Spearman 순위로 재검증합니다.</p></div>
+      </div>
+      <div id="v-api" style="display:none">
+        <div class="box"><h4>카카오맵 JavaScript API</h4>
+          <p>카카오디벨로퍼스 → 앱 → 앱 키에서 <b>JavaScript 키</b>를 복사하세요.</p>
+          <code>https://dapi.kakao.com/v2/maps/sdk.js?appkey=키&amp;autoload=false</code>
+          <p style="margin-top:8px">앱 설정 → 플랫폼 → Web에 이 사이트 도메인을 등록해야 타일이 보입니다. 키는 이 브라우저에만 저장됩니다.</p>
+        </div>
+        <div class="box"><h4>KPX · 한전 공개 데이터</h4><p>openapi.kpx.or.kr · data.go.kr</p></div>
+        <div class="box">
+          <h4>카카오 키 다시 연결</h4>
+          <input type="password" id="kk2" placeholder="JavaScript 키" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:6px;margin:6px 0;font-family:inherit"/>
+          <button type="button" id="bk2" class="btn-g" style="width:100%;background:var(--tx);color:#fff;border:none">카카오맵 불러오기</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+<script>
+const DATA = {"서울특별시":{"name":"서울특별시","short":"서울","lat":37.5665,"lng":126.978,"score":97.4,"gap":1.53,"peak":1.34,"res":59,"children":[{"name":"종로구","lat":37.5735,"lng":126.979,"score":70.2,"gap":1.36,"peak":1.26,"res":57},{"name":"중구","lat":37.5641,"lng":126.9979,"score":75.2,"gap":1.39,"peak":1.28,"res":56},{"name":"용산구","lat":37.5326,"lng":126.99,"score":66.4,"gap":1.33,"peak":1.25,"res":49},{"name":"성동구","lat":37.5633,"lng":127.0366,"score":72.0,"gap":1.37,"peak":1.27,"res":56},{"name":"광진구","lat":37.5384,"lng":127.0822,"score":99.3,"gap":1.55,"peak":1.35,"res":60},{"name":"동대문구","lat":37.5744,"lng":127.0396,"score":80.7,"gap":1.42,"peak":1.29,"res":56},{"name":"중랑구","lat":37.6063,"lng":127.0925,"score":75.0,"gap":1.39,"peak":1.27,"res":59},{"name":"성북구","lat":37.5894,"lng":127.0167,"score":74.9,"gap":1.39,"peak":1.27,"res":53},{"name":"강북구","lat":37.6396,"lng":127.0257,"score":73.6,"gap":1.38,"peak":1.27,"res":52},{"name":"도봉구","lat":37.6688,"lng":127.0471,"score":67.7,"gap":1.34,"peak":1.25,"res":50},{"name":"노원구","lat":37.6542,"lng":127.0568,"score":82.6,"gap":1.44,"peak":1.3,"res":61},{"name":"은평구","lat":37.6026,"lng":126.9291,"score":94.5,"gap":1.51,"peak":1.33,"res":60},{"name":"서대문구","lat":37.5791,"lng":126.9368,"score":74.9,"gap":1.39,"peak":1.27,"res":54},{"name":"마포구","lat":37.5663,"lng":126.9019,"score":99.5,"gap":1.55,"peak":1.35,"res":59},{"name":"양천구","lat":37.517,"lng":126.8664,"score":70.5,"gap":1.36,"peak":1.26,"res":53},{"name":"강서구","lat":37.5509,"lng":126.8495,"score":78.3,"gap":1.41,"peak":1.29,"res":61},{"name":"구로구","lat":37.4954,"lng":126.8874,"score":99.1,"gap":1.54,"peak":1.35,"res":64},{"name":"금천구","lat":37.4569,"lng":126.8955,"score":69.8,"gap":1.35,"peak":1.26,"res":59},{"name":"영등포구","lat":37.5264,"lng":126.8962,"score":90.0,"gap":1.49,"peak":1.32,"res":60},{"name":"동작구","lat":37.5124,"lng":126.9393,"score":83.5,"gap":1.44,"peak":1.3,"res":60},{"name":"관악구","lat":37.4784,"lng":126.9516,"score":76.9,"gap":1.4,"peak":1.28,"res":54},{"name":"서초구","lat":37.4837,"lng":127.0324,"score":79.4,"gap":1.42,"peak":1.29,"res":59},{"name":"강남구","lat":37.5172,"lng":127.0473,"score":75.7,"gap":1.39,"peak":1.28,"res":53},{"name":"송파구","lat":37.5145,"lng":127.1059,"score":98.7,"gap":1.54,"peak":1.35,"res":63},{"name":"강동구","lat":37.5301,"lng":127.1238,"score":78.9,"gap":1.41,"peak":1.29,"res":58}]},"부산광역시":{"name":"부산광역시","short":"부산","lat":35.1796,"lng":129.0756,"score":98.2,"gap":1.54,"peak":1.34,"res":64,"children":[{"name":"중구","lat":35.1066,"lng":129.0323,"score":70.5,"gap":1.36,"peak":1.26,"res":53},{"name":"서구","lat":35.0979,"lng":129.0244,"score":80.5,"gap":1.42,"peak":1.29,"res":61},{"name":"동구","lat":35.1292,"lng":129.0454,"score":62.6,"gap":1.31,"peak":1.24,"res":56},{"name":"영도구","lat":35.0912,"lng":129.0679,"score":89.2,"gap":1.48,"peak":1.32,"res":60},{"name":"부산진구","lat":35.163,"lng":129.0532,"score":60.6,"gap":1.29,"peak":1.23,"res":52},{"name":"동래구","lat":35.2045,"lng":129.078,"score":85.2,"gap":1.45,"peak":1.31,"res":57},{"name":"남구","lat":35.1366,"lng":129.0843,"score":65.1,"gap":1.32,"peak":1.25,"res":57},{"name":"북구","lat":35.1972,"lng":128.9903,"score":91.8,"gap":1.5,"peak":1.33,"res":59},{"name":"해운대구","lat":35.1631,"lng":129.1635,"score":95.7,"gap":1.52,"peak":1.34,"res":65},{"name":"사하구","lat":35.1046,"lng":128.9748,"score":89.4,"gap":1.48,"peak":1.32,"res":59},{"name":"금정구","lat":35.2428,"lng":129.0921,"score":91.0,"gap":1.49,"peak":1.32,"res":61},{"name":"강서구","lat":35.2123,"lng":128.9806,"score":90.5,"gap":1.49,"peak":1.32,"res":60},{"name":"연제구","lat":35.1762,"lng":129.0797,"score":65.9,"gap":1.33,"peak":1.25,"res":54},{"name":"수영구","lat":35.1456,"lng":129.1134,"score":89.0,"gap":1.48,"peak":1.32,"res":63},{"name":"사상구","lat":35.1525,"lng":128.9906,"score":67.6,"gap":1.34,"peak":1.25,"res":57},{"name":"기장군","lat":35.2445,"lng":129.2223,"score":92.6,"gap":1.5,"peak":1.33,"res":65}]},"대구광역시":{"name":"대구광역시","short":"대구","lat":35.8714,"lng":128.6014,"score":99.5,"gap":1.55,"peak":1.35,"res":59,"children":[{"name":"중구","lat":35.8694,"lng":128.6062,"score":79.0,"gap":1.41,"peak":1.29,"res":54},{"name":"동구","lat":35.8868,"lng":128.635,"score":62.8,"gap":1.31,"peak":1.24,"res":55},{"name":"서구","lat":35.8717,"lng":128.5592,"score":94.5,"gap":1.51,"peak":1.33,"res":59},{"name":"남구","lat":35.846,"lng":128.5974,"score":93.8,"gap":1.51,"peak":1.33,"res":59},{"name":"북구","lat":35.8858,"lng":128.5829,"score":94.1,"gap":1.51,"peak":1.33,"res":64},{"name":"수성구","lat":35.8583,"lng":128.6306,"score":66.7,"gap":1.33,"peak":1.25,"res":54},{"name":"달서구","lat":35.8298,"lng":128.5329,"score":83.9,"gap":1.45,"peak":1.3,"res":62},{"name":"달성군","lat":35.7747,"lng":128.4314,"score":62.3,"gap":1.3,"peak":1.24,"res":56},{"name":"군위군","lat":36.1125,"lng":128.5728,"score":86.3,"gap":1.46,"peak":1.31,"res":57}]},"인천광역시":{"name":"인천광역시","short":"인천","lat":37.4563,"lng":126.7052,"score":64.2,"gap":1.32,"peak":1.24,"res":57,"children":[{"name":"중구","lat":37.4738,"lng":126.6216,"score":83.2,"gap":1.44,"peak":1.3,"res":62},{"name":"동구","lat":37.4739,"lng":126.6432,"score":59.4,"gap":1.29,"peak":1.23,"res":54},{"name":"미추홀구","lat":37.4635,"lng":126.65,"score":73.5,"gap":1.38,"peak":1.27,"res":61},{"name":"연수구","lat":37.4102,"lng":126.6783,"score":52.7,"gap":1.24,"peak":1.21,"res":52},{"name":"남동구","lat":37.4469,"lng":126.7315,"score":68.5,"gap":1.35,"peak":1.26,"res":59},{"name":"부평구","lat":37.507,"lng":126.7218,"score":72.2,"gap":1.37,"peak":1.27,"res":57},{"name":"계양구","lat":37.5373,"lng":126.7378,"score":72.5,"gap":1.37,"peak":1.27,"res":53},{"name":"서구","lat":37.5459,"lng":126.676,"score":83.4,"gap":1.44,"peak":1.3,"res":61},{"name":"강화군","lat":37.7469,"lng":126.4878,"score":63.5,"gap":1.31,"peak":1.24,"res":55},{"name":"옹진군","lat":37.4464,"lng":126.6367,"score":54.2,"gap":1.25,"peak":1.21,"res":54}]},"광주광역시":{"name":"광주광역시","short":"광주","lat":35.1595,"lng":126.8526,"score":41.9,"gap":1.17,"peak":1.18,"res":50,"children":[{"name":"동구","lat":35.146,"lng":126.923,"score":31.5,"gap":1.1,"peak":1.14,"res":48},{"name":"서구","lat":35.152,"lng":126.8895,"score":50.1,"gap":1.23,"peak":1.2,"res":47},{"name":"남구","lat":35.133,"lng":126.9024,"score":46.2,"gap":1.2,"peak":1.19,"res":51},{"name":"북구","lat":35.1746,"lng":126.912,"score":32.0,"gap":1.11,"peak":1.15,"res":44},{"name":"광산구","lat":35.1395,"lng":126.7937,"score":42.5,"gap":1.18,"peak":1.18,"res":51}]},"대전광역시":{"name":"대전광역시","short":"대전","lat":36.3504,"lng":127.3845,"score":69.3,"gap":1.35,"peak":1.26,"res":51,"children":[{"name":"동구","lat":36.312,"lng":127.4548,"score":76.5,"gap":1.4,"peak":1.28,"res":60},{"name":"중구","lat":36.3258,"lng":127.4214,"score":78.4,"gap":1.41,"peak":1.29,"res":59},{"name":"서구","lat":36.3551,"lng":127.3836,"score":56.1,"gap":1.26,"peak":1.22,"res":51},{"name":"유성구","lat":36.3623,"lng":127.356,"score":79.1,"gap":1.41,"peak":1.29,"res":54},{"name":"대덕구","lat":36.3467,"lng":127.4156,"score":78.3,"gap":1.41,"peak":1.28,"res":60}]},"울산광역시":{"name":"울산광역시","short":"울산","lat":35.5384,"lng":129.3114,"score":99.5,"gap":1.55,"peak":1.35,"res":59,"children":[{"name":"중구","lat":35.5694,"lng":129.3328,"score":82.0,"gap":1.43,"peak":1.3,"res":62},{"name":"남구","lat":35.5436,"lng":129.33,"score":85.9,"gap":1.46,"peak":1.31,"res":61},{"name":"동구","lat":35.5047,"lng":129.4164,"score":88.4,"gap":1.47,"peak":1.32,"res":59},{"name":"북구","lat":35.5826,"lng":129.3614,"score":99.1,"gap":1.54,"peak":1.35,"res":65},{"name":"울주군","lat":35.5223,"lng":129.2424,"score":99.1,"gap":1.54,"peak":1.35,"res":65}]},"세종특별자치시":{"name":"세종특별자치시","short":"세종","lat":36.48,"lng":127.289,"score":78.6,"gap":1.41,"peak":1.29,"res":55,"children":[{"name":"세종시","lat":36.4801,"lng":127.289,"score":67.2,"gap":1.34,"peak":1.25,"res":53}]},"경기도":{"name":"경기도","short":"경기","lat":37.4138,"lng":127.5183,"score":66.1,"gap":1.33,"peak":1.25,"res":58,"children":[{"name":"수원시","lat":37.2636,"lng":127.0286,"score":90.7,"gap":1.49,"peak":1.32,"res":57},{"name":"성남시","lat":37.4201,"lng":127.1262,"score":61.2,"gap":1.3,"peak":1.23,"res":55},{"name":"의정부시","lat":37.7381,"lng":127.0337,"score":76.3,"gap":1.4,"peak":1.28,"res":61},{"name":"안양시","lat":37.3943,"lng":126.9568,"score":79.8,"gap":1.42,"peak":1.29,"res":54},{"name":"부천시","lat":37.5034,"lng":126.766,"score":73.2,"gap":1.38,"peak":1.27,"res":56},{"name":"광명시","lat":37.4786,"lng":126.8644,"score":87.5,"gap":1.47,"peak":1.31,"res":63},{"name":"평택시","lat":36.9921,"lng":127.1129,"score":73.0,"gap":1.37,"peak":1.27,"res":56},{"name":"동두천시","lat":37.9036,"lng":127.0605,"score":86.5,"gap":1.46,"peak":1.31,"res":55},{"name":"안산시","lat":37.3219,"lng":126.8309,"score":89.4,"gap":1.48,"peak":1.32,"res":62},{"name":"고양시","lat":37.6584,"lng":126.832,"score":82.6,"gap":1.44,"peak":1.3,"res":57},{"name":"과천시","lat":37.4292,"lng":126.9876,"score":88.5,"gap":1.48,"peak":1.32,"res":65},{"name":"구리시","lat":37.5943,"lng":127.1296,"score":72.9,"gap":1.37,"peak":1.27,"res":55},{"name":"남양주시","lat":37.636,"lng":127.2165,"score":85.6,"gap":1.46,"peak":1.31,"res":64},{"name":"오산시","lat":37.1499,"lng":127.0772,"score":84.6,"gap":1.45,"peak":1.3,"res":61},{"name":"시흥시","lat":37.38,"lng":126.8031,"score":76.4,"gap":1.4,"peak":1.28,"res":58},{"name":"군포시","lat":37.3617,"lng":126.9352,"score":78.0,"gap":1.41,"peak":1.28,"res":62},{"name":"의왕시","lat":37.3449,"lng":126.9683,"score":61.5,"gap":1.3,"peak":1.23,"res":51},{"name":"하남시","lat":37.5393,"lng":127.2149,"score":85.1,"gap":1.45,"peak":1.31,"res":61},{"name":"용인시","lat":37.2411,"lng":127.1776,"score":90.6,"gap":1.49,"peak":1.32,"res":62},{"name":"파주시","lat":37.7599,"lng":126.78,"score":82.8,"gap":1.44,"peak":1.3,"res":63},{"name":"이천시","lat":37.272,"lng":127.435,"score":69.1,"gap":1.35,"peak":1.26,"res":50},{"name":"안성시","lat":37.008,"lng":127.2797,"score":89.0,"gap":1.48,"peak":1.32,"res":61},{"name":"김포시","lat":37.6153,"lng":126.7155,"score":61.9,"gap":1.3,"peak":1.24,"res":51},{"name":"화성시","lat":37.1995,"lng":126.8312,"score":67.4,"gap":1.34,"peak":1.25,"res":52},{"name":"광주시","lat":37.4294,"lng":127.255,"score":89.3,"gap":1.48,"peak":1.32,"res":60},{"name":"양주시","lat":37.7853,"lng":127.0458,"score":59.6,"gap":1.29,"peak":1.23,"res":50},{"name":"포천시","lat":37.8949,"lng":127.2002,"score":76.8,"gap":1.4,"peak":1.28,"res":61},{"name":"여주시","lat":37.2983,"lng":127.637,"score":62.4,"gap":1.31,"peak":1.24,"res":54},{"name":"연천군","lat":38.0964,"lng":127.0748,"score":69.9,"gap":1.35,"peak":1.26,"res":52},{"name":"가평군","lat":37.8315,"lng":127.5096,"score":74.1,"gap":1.38,"peak":1.27,"res":56},{"name":"양평군","lat":37.4917,"lng":127.4876,"score":79.9,"gap":1.42,"peak":1.29,"res":59}]},"강원특별자치도":{"name":"강원특별자치도","short":"강원","lat":37.8228,"lng":128.1555,"score":51.9,"gap":1.24,"peak":1.21,"res":51,"children":[{"name":"춘천시","lat":37.8813,"lng":127.73,"score":36.2,"gap":1.14,"peak":1.16,"res":43},{"name":"원주시","lat":37.3422,"lng":127.9202,"score":62.0,"gap":1.3,"peak":1.24,"res":54},{"name":"강릉시","lat":37.7519,"lng":128.8761,"score":58.7,"gap":1.28,"peak":1.23,"res":47},{"name":"동해시","lat":37.5247,"lng":129.1143,"score":60.3,"gap":1.29,"peak":1.23,"res":53},{"name":"태백시","lat":37.1641,"lng":128.9857,"score":46.0,"gap":1.2,"peak":1.19,"res":45},{"name":"속초시","lat":38.207,"lng":128.5919,"score":59.1,"gap":1.28,"peak":1.23,"res":52},{"name":"삼척시","lat":37.4499,"lng":129.1652,"score":60.4,"gap":1.29,"peak":1.23,"res":51},{"name":"홍천군","lat":37.6972,"lng":127.8889,"score":38.9,"gap":1.15,"peak":1.17,"res":43},{"name":"횡성군","lat":37.4917,"lng":127.985,"score":61.2,"gap":1.3,"peak":1.23,"res":50},{"name":"영월군","lat":37.1836,"lng":128.4617,"score":64.9,"gap":1.32,"peak":1.24,"res":55},{"name":"평창군","lat":37.3708,"lng":128.3906,"score":38.7,"gap":1.15,"peak":1.17,"res":49},{"name":"정선군","lat":37.3807,"lng":128.6608,"score":62.1,"gap":1.3,"peak":1.24,"res":50},{"name":"철원군","lat":38.1466,"lng":127.3133,"score":49.9,"gap":1.22,"peak":1.2,"res":46},{"name":"화천군","lat":38.1063,"lng":127.7082,"score":66.6,"gap":1.33,"peak":1.25,"res":57},{"name":"양구군","lat":38.1098,"lng":127.9897,"score":44.2,"gap":1.19,"peak":1.18,"res":52},{"name":"인제군","lat":38.0695,"lng":128.1707,"score":39.6,"gap":1.16,"peak":1.17,"res":50},{"name":"고성군","lat":38.3806,"lng":128.4677,"score":53.2,"gap":1.25,"peak":1.21,"res":46},{"name":"양양군","lat":38.0754,"lng":128.619,"score":40.8,"gap":1.17,"peak":1.17,"res":43}]},"충청북도":{"name":"충청북도","short":"충북","lat":36.8,"lng":127.7,"score":68.4,"gap":1.34,"peak":1.26,"res":50,"children":[{"name":"청주시","lat":36.6424,"lng":127.489,"score":51.0,"gap":1.23,"peak":1.2,"res":46},{"name":"충주시","lat":36.991,"lng":127.926,"score":74.2,"gap":1.38,"peak":1.27,"res":55},{"name":"제천시","lat":37.1326,"lng":128.191,"score":47.4,"gap":1.21,"peak":1.19,"res":50},{"name":"보은군","lat":36.4894,"lng":127.7292,"score":68.3,"gap":1.34,"peak":1.25,"res":56},{"name":"옥천군","lat":36.3064,"lng":127.5714,"score":48.0,"gap":1.21,"peak":1.19,"res":51},{"name":"영동군","lat":36.175,"lng":127.7764,"score":68.3,"gap":1.34,"peak":1.25,"res":56},{"name":"증평군","lat":36.7853,"lng":127.5815,"score":57.6,"gap":1.27,"peak":1.22,"res":54},{"name":"진천군","lat":36.8554,"lng":127.4356,"score":68.9,"gap":1.35,"peak":1.26,"res":51},{"name":"괴산군","lat":36.8153,"lng":127.7867,"score":68.0,"gap":1.34,"peak":1.25,"res":57},{"name":"음성군","lat":36.94,"lng":127.69,"score":59.3,"gap":1.29,"peak":1.23,"res":52},{"name":"단양군","lat":36.9845,"lng":128.3655,"score":68.8,"gap":1.35,"peak":1.26,"res":57}]},"충청남도":{"name":"충청남도","short":"충남","lat":36.5184,"lng":126.8,"score":42.6,"gap":1.18,"peak":1.18,"res":43,"children":[{"name":"천안시","lat":36.8151,"lng":127.1139,"score":38.0,"gap":1.15,"peak":1.16,"res":50},{"name":"공주시","lat":36.4465,"lng":127.119,"score":42.7,"gap":1.18,"peak":1.18,"res":48},{"name":"보령시","lat":36.3334,"lng":126.6129,"score":43.2,"gap":1.18,"peak":1.18,"res":46},{"name":"아산시","lat":36.7898,"lng":127.0018,"score":62.3,"gap":1.3,"peak":1.24,"res":56},{"name":"서산시","lat":36.7848,"lng":126.4503,"score":38.4,"gap":1.15,"peak":1.17,"res":48},{"name":"논산시","lat":36.1872,"lng":127.0986,"score":44.6,"gap":1.19,"peak":1.18,"res":50},{"name":"계룡시","lat":36.2744,"lng":127.2489,"score":39.1,"gap":1.15,"peak":1.17,"res":46},{"name":"당진시","lat":36.8897,"lng":126.6459,"score":54.7,"gap":1.26,"peak":1.21,"res":47},{"name":"금산군","lat":36.1087,"lng":127.4882,"score":57.8,"gap":1.28,"peak":1.22,"res":51},{"name":"부여군","lat":36.2757,"lng":126.9098,"score":34.2,"gap":1.12,"peak":1.15,"res":48},{"name":"서천군","lat":36.0803,"lng":126.6918,"score":50.4,"gap":1.23,"peak":1.2,"res":47},{"name":"청양군","lat":36.4592,"lng":126.8024,"score":66.1,"gap":1.33,"peak":1.25,"res":57},{"name":"홍성군","lat":36.6013,"lng":126.6608,"score":57.7,"gap":1.28,"peak":1.22,"res":53},{"name":"예산군","lat":36.6826,"lng":126.848,"score":63.0,"gap":1.31,"peak":1.24,"res":49},{"name":"태안군","lat":36.7456,"lng":126.298,"score":40.2,"gap":1.16,"peak":1.17,"res":46}]},"전북특별자치도":{"name":"전북특별자치도","short":"전북","lat":35.7175,"lng":127.153,"score":46.2,"gap":1.2,"peak":1.19,"res":50,"children":[{"name":"전주시","lat":35.8242,"lng":127.148,"score":59.2,"gap":1.28,"peak":1.23,"res":51},{"name":"군산시","lat":35.9676,"lng":126.7369,"score":46.7,"gap":1.2,"peak":1.19,"res":48},{"name":"익산시","lat":35.9483,"lng":126.9578,"score":61.5,"gap":1.3,"peak":1.23,"res":51},{"name":"정읍시","lat":35.5699,"lng":126.856,"score":31.9,"gap":1.11,"peak":1.15,"res":39},{"name":"남원시","lat":35.4164,"lng":127.3906,"score":58.4,"gap":1.28,"peak":1.23,"res":49},{"name":"김제시","lat":35.8036,"lng":126.8808,"score":50.0,"gap":1.23,"peak":1.2,"res":53},{"name":"완주군","lat":35.9047,"lng":127.1628,"score":31.6,"gap":1.11,"peak":1.14,"res":41},{"name":"진안군","lat":35.7917,"lng":127.425,"score":39.7,"gap":1.16,"peak":1.17,"res":42},{"name":"무주군","lat":36.0069,"lng":127.6608,"score":46.4,"gap":1.2,"peak":1.19,"res":44},{"name":"장수군","lat":35.6472,"lng":127.5211,"score":59.5,"gap":1.29,"peak":1.23,"res":52},{"name":"임실군","lat":35.6122,"lng":127.2794,"score":50.1,"gap":1.23,"peak":1.2,"res":50},{"name":"순창군","lat":35.3744,"lng":127.1375,"score":51.3,"gap":1.23,"peak":1.2,"res":51},{"name":"고창군","lat":35.4358,"lng":126.702,"score":52.3,"gap":1.24,"peak":1.21,"res":45},{"name":"부안군","lat":35.7317,"lng":126.733,"score":60.9,"gap":1.3,"peak":1.23,"res":53}]},"전라남도":{"name":"전라남도","short":"전남","lat":34.8679,"lng":126.991,"score":37.7,"gap":1.14,"peak":1.16,"res":44,"children":[{"name":"목포시","lat":34.8118,"lng":126.3922,"score":30.8,"gap":1.1,"peak":1.14,"res":47},{"name":"여수시","lat":34.7604,"lng":127.6622,"score":50.2,"gap":1.23,"peak":1.2,"res":45},{"name":"순천시","lat":34.9506,"lng":127.4872,"score":46.2,"gap":1.2,"peak":1.19,"res":50},{"name":"나주시","lat":35.016,"lng":126.7107,"score":32.9,"gap":1.11,"peak":1.15,"res":39},{"name":"광양시","lat":34.9407,"lng":127.6956,"score":32.1,"gap":1.11,"peak":1.15,"res":42},{"name":"담양군","lat":35.3214,"lng":126.9883,"score":32.8,"gap":1.11,"peak":1.15,"res":39},{"name":"곡성군","lat":35.2819,"lng":127.2919,"score":55.2,"gap":1.26,"peak":1.22,"res":47},{"name":"구례군","lat":35.2025,"lng":127.4628,"score":48.9,"gap":1.22,"peak":1.2,"res":53},{"name":"고흥군","lat":34.6112,"lng":127.2847,"score":38.4,"gap":1.15,"peak":1.17,"res":48},{"name":"보성군","lat":34.7714,"lng":127.08,"score":48.4,"gap":1.21,"peak":1.2,"res":48},{"name":"화순군","lat":35.0644,"lng":126.9867,"score":48.6,"gap":1.22,"peak":1.2,"res":48},{"name":"장흥군","lat":34.6817,"lng":126.907,"score":53.0,"gap":1.24,"peak":1.21,"res":51},{"name":"강진군","lat":34.642,"lng":126.7672,"score":46.8,"gap":1.2,"peak":1.19,"res":50},{"name":"해남군","lat":34.5735,"lng":126.599,"score":49.0,"gap":1.22,"peak":1.2,"res":49},{"name":"영암군","lat":34.8,"lng":126.6967,"score":56.0,"gap":1.26,"peak":1.22,"res":48},{"name":"무안군","lat":34.9903,"lng":126.4817,"score":37.0,"gap":1.14,"peak":1.16,"res":42},{"name":"함평군","lat":35.0656,"lng":126.5169,"score":44.7,"gap":1.19,"peak":1.18,"res":52},{"name":"영광군","lat":35.2772,"lng":126.512,"score":30.6,"gap":1.1,"peak":1.14,"res":42},{"name":"장성군","lat":35.3019,"lng":126.7847,"score":25.6,"gap":1.07,"peak":1.13,"res":43},{"name":"완도군","lat":34.3119,"lng":126.755,"score":32.0,"gap":1.11,"peak":1.15,"res":47},{"name":"진도군","lat":34.4869,"lng":126.2633,"score":43.0,"gap":1.18,"peak":1.18,"res":49},{"name":"신안군","lat":34.8261,"lng":126.1011,"score":41.7,"gap":1.17,"peak":1.18,"res":48}]},"경상북도":{"name":"경상북도","short":"경북","lat":36.4919,"lng":128.8889,"score":69.9,"gap":1.35,"peak":1.26,"res":57,"children":[{"name":"포항시","lat":36.019,"lng":129.3435,"score":79.0,"gap":1.41,"peak":1.29,"res":55},{"name":"경주시","lat":35.8562,"lng":129.2247,"score":65.4,"gap":1.33,"peak":1.25,"res":51},{"name":"김천시","lat":36.1398,"lng":128.1136,"score":72.9,"gap":1.37,"peak":1.27,"res":55},{"name":"안동시","lat":36.5684,"lng":128.7294,"score":61.2,"gap":1.3,"peak":1.23,"res":55},{"name":"구미시","lat":36.1195,"lng":128.3445,"score":81.4,"gap":1.43,"peak":1.29,"res":62},{"name":"영주시","lat":36.8057,"lng":128.624,"score":83.3,"gap":1.44,"peak":1.3,"res":60},{"name":"영천시","lat":35.9733,"lng":128.9386,"score":68.8,"gap":1.35,"peak":1.26,"res":54},{"name":"상주시","lat":36.4109,"lng":128.1591,"score":77.8,"gap":1.41,"peak":1.28,"res":57},{"name":"문경시","lat":36.5865,"lng":128.1866,"score":66.4,"gap":1.33,"peak":1.25,"res":57},{"name":"경산시","lat":35.8251,"lng":128.7415,"score":76.7,"gap":1.4,"peak":1.28,"res":60},{"name":"의성군","lat":36.3527,"lng":128.697,"score":74.0,"gap":1.38,"peak":1.27,"res":60},{"name":"청송군","lat":36.4363,"lng":129.0571,"score":62.6,"gap":1.31,"peak":1.24,"res":57},{"name":"영양군","lat":36.6667,"lng":129.1125,"score":69.3,"gap":1.35,"peak":1.26,"res":51},{"name":"영덕군","lat":36.4153,"lng":129.3658,"score":69.8,"gap":1.35,"peak":1.26,"res":50},{"name":"청도군","lat":35.6472,"lng":128.7342,"score":53.3,"gap":1.25,"peak":1.21,"res":54},{"name":"고령군","lat":35.7264,"lng":128.2631,"score":61.7,"gap":1.3,"peak":1.24,"res":56},{"name":"성주군","lat":35.9192,"lng":128.2831,"score":83.1,"gap":1.44,"peak":1.3,"res":54},{"name":"칠곡군","lat":35.9956,"lng":128.4017,"score":77.4,"gap":1.4,"peak":1.28,"res":54},{"name":"예천군","lat":36.6559,"lng":128.4529,"score":60.8,"gap":1.3,"peak":1.23,"res":48},{"name":"봉화군","lat":36.8931,"lng":128.7326,"score":75.7,"gap":1.39,"peak":1.28,"res":59},{"name":"울진군","lat":36.9931,"lng":129.4004,"score":63.6,"gap":1.31,"peak":1.24,"res":54},{"name":"울릉군","lat":37.4844,"lng":130.9057,"score":56.1,"gap":1.26,"peak":1.22,"res":51}]},"경상남도":{"name":"경상남도","short":"경남","lat":35.4606,"lng":128.2132,"score":52.4,"gap":1.24,"peak":1.21,"res":50,"children":[{"name":"창원시","lat":35.228,"lng":128.6811,"score":60.5,"gap":1.29,"peak":1.23,"res":57},{"name":"진주시","lat":35.18,"lng":128.1076,"score":52.1,"gap":1.24,"peak":1.21,"res":52},{"name":"통영시","lat":34.8544,"lng":128.4331,"score":63.2,"gap":1.31,"peak":1.24,"res":57},{"name":"사천시","lat":35.0037,"lng":128.064,"score":71.2,"gap":1.36,"peak":1.26,"res":53},{"name":"김해시","lat":35.2285,"lng":128.889,"score":57.7,"gap":1.28,"peak":1.22,"res":52},{"name":"밀양시","lat":35.5037,"lng":128.7464,"score":76.3,"gap":1.4,"peak":1.28,"res":60},{"name":"거제시","lat":34.8806,"lng":128.6211,"score":66.0,"gap":1.33,"peak":1.25,"res":58},{"name":"양산시","lat":35.335,"lng":129.037,"score":74.6,"gap":1.38,"peak":1.27,"res":54},{"name":"의령군","lat":35.3222,"lng":128.2617,"score":63.4,"gap":1.31,"peak":1.24,"res":55},{"name":"함안군","lat":35.2725,"lng":128.4064,"score":56.5,"gap":1.27,"peak":1.22,"res":55},{"name":"창녕군","lat":35.5444,"lng":128.5,"score":77.9,"gap":1.41,"peak":1.28,"res":60},{"name":"고성군","lat":34.9731,"lng":128.3222,"score":64.5,"gap":1.32,"peak":1.24,"res":56},{"name":"남해군","lat":34.8376,"lng":127.8925,"score":72.5,"gap":1.37,"peak":1.27,"res":51},{"name":"하동군","lat":35.0675,"lng":127.7514,"score":79.8,"gap":1.42,"peak":1.29,"res":55},{"name":"산청군","lat":35.4156,"lng":127.8736,"score":60.5,"gap":1.29,"peak":1.23,"res":57},{"name":"함양군","lat":35.5204,"lng":127.7252,"score":53.4,"gap":1.25,"peak":1.21,"res":48},{"name":"거창군","lat":35.6867,"lng":127.9096,"score":68.3,"gap":1.34,"peak":1.25,"res":56},{"name":"합천군","lat":35.5666,"lng":128.1658,"score":77.2,"gap":1.4,"peak":1.28,"res":57}]},"제주특별자치도":{"name":"제주특별자치도","short":"제주","lat":33.4996,"lng":126.5312,"score":47.7,"gap":1.21,"peak":1.19,"res":47,"children":[{"name":"제주시","lat":33.4996,"lng":126.5312,"score":20.8,"gap":1.04,"peak":1.11,"res":39},{"name":"서귀포시","lat":33.2541,"lng":126.56,"score":32.7,"gap":1.11,"peak":1.15,"res":41}]}};
+const MAPMETA = {"paths":{"서울특별시":"M264.0,173.3L271.6,175.1L271.2,182.0L273.1,183.0L273.8,189.3L272.5,197.6L279.9,193.4L280.5,199.5L276.7,203.5L276.2,206.3L278.3,207.2L276.8,211.1L267.2,219.3L265.0,213.1L252.1,218.5L248.3,208.2L242.7,211.5L243.5,200.3L237.5,197.8L241.2,189.8L246.7,195.0L249.0,193.9L251.4,192.0L251.9,181.9L256.3,180.2L257.4,185.2L259.2,184.8L260.9,176.7L264.0,173.3Z","부산광역시":"M462.8,623.3L462.5,613.7L460.0,619.3L460.1,613.1L456.2,618.4L456.5,611.4L455.1,618.4L450.4,617.9L448.6,615.3L450.7,613.8L450.3,610.8L445.9,604.9L453.4,603.3L454.3,606.1L454.6,596.2L465.9,592.5L468.4,585.3L478.1,580.1L480.8,572.1L479.1,569.1L485.0,572.1L487.4,565.8L494.2,566.1L495.7,573.8L498.3,576.7L493.9,578.3L490.0,600.3L485.6,605.5L479.1,605.9L478.2,609.3L480.1,613.0L478.2,616.3L472.4,610.5L468.6,622.8L467.2,617.2L467.7,623.5L464.2,622.2L463.4,626.3L462.8,623.3Z","대구광역시":"M435.8,459.3L440.9,466.6L440.0,473.9L442.5,481.1L441.4,486.2L438.4,486.3L438.0,494.8L434.4,497.6L435.3,507.7L428.4,512.5L427.2,506.4L422.3,506.7L418.5,510.8L418.9,515.8L416.4,517.5L416.3,523.2L402.5,528.3L405.5,523.3L400.4,512.2L408.7,512.1L408.7,508.6L403.7,502.7L407.5,494.3L413.9,493.2L410.5,488.0L403.7,487.0L405.3,479.0L411.0,471.6L413.2,473.1L412.4,479.0L415.8,481.2L419.2,473.0L418.6,465.3L421.1,468.6L427.8,460.9L435.8,459.3Z","인천광역시":"M170.2,245.9L171.2,250.0L176.1,252.9L171.1,256.6L169.6,253.1L167.8,254.4L170.2,245.9ZM208.6,250.7L206.2,254.1L203.5,252.6L203.6,245.5L209.1,244.0L210.6,248.3L208.6,250.7ZM210.7,202.0L217.1,204.8L218.9,209.0L211.0,213.0L204.5,220.7L196.4,217.0L196.0,211.7L207.9,207.3L210.7,202.0ZM226.4,183.8L236.3,193.7L240.5,193.4L235.2,205.7L235.3,209.4L239.2,214.9L233.1,227.1L229.4,226.5L227.3,232.7L225.0,233.2L226.2,233.8L218.7,234.8L220.3,233.2L218.9,231.9L226.2,231.7L221.7,226.4L221.1,220.1L224.5,220.6L221.7,219.1L221.9,215.0L220.1,217.7L219.7,213.7L223.1,214.4L220.2,211.8L223.2,208.5L224.5,210.2L224.7,206.5L221.1,207.9L221.4,198.0L218.1,192.2L223.3,189.8L226.4,183.8ZM129.2,176.9L126.7,181.3L126.0,176.8L129.2,176.9ZM192.9,165.4L191.9,171.1L198.0,176.2L194.1,182.7L191.8,176.3L186.7,171.4L188.6,170.9L189.1,165.6L192.9,165.4ZM186.4,153.7L192.4,154.9L193.1,158.0L183.0,164.6L180.1,161.6L182.0,155.4L186.4,153.7ZM204.1,152.1L211.0,159.1L213.1,165.2L212.1,177.5L214.9,187.1L212.5,188.4L212.2,193.6L211.7,190.3L200.6,191.3L197.1,187.9L196.6,184.3L201.3,181.4L199.2,174.0L195.1,170.6L194.9,158.0L199.4,152.3L204.1,152.1ZM27.3,151.9L27.3,151.9L27.3,151.9L27.3,151.9ZM27.3,151.9L24.1,156.3L21.8,152.6L26.0,147.8L28.5,149.4L27.3,151.9ZM24.3,125.6L27.9,125.4L30.4,129.2L24.8,136.5L19.4,135.2L16.4,127.4L24.3,125.6Z","광주광역시":"M237.4,588.3L236.6,592.0L241.7,594.7L249.4,589.1L254.5,589.0L258.4,601.1L261.7,599.8L263.9,602.4L262.9,610.5L256.8,619.4L253.3,616.3L241.9,623.2L236.7,621.9L238.2,619.9L234.3,612.6L227.6,614.0L225.3,606.9L228.1,602.4L226.1,599.1L232.7,595.7L234.7,588.9L237.4,588.3Z","대전광역시":"M302.7,378.9L303.5,384.7L308.0,385.7L311.4,381.0L310.8,384.3L313.5,385.2L312.0,388.2L313.2,392.6L315.5,390.1L319.2,394.3L315.6,396.2L315.3,401.8L313.1,404.3L312.0,422.3L307.0,428.9L301.5,422.2L301.7,417.3L299.0,416.3L299.1,424.6L296.0,430.9L294.1,424.4L290.6,421.9L291.7,417.0L287.0,412.6L290.4,403.4L290.7,391.6L296.7,388.8L298.7,379.0L302.7,378.9Z","울산광역시":"M483.3,510.2L488.2,509.3L493.3,512.8L493.2,519.6L497.4,522.5L503.3,516.4L513.1,521.2L512.2,524.5L514.7,532.2L513.5,542.1L512.0,542.0L512.9,545.4L511.4,545.0L512.6,548.2L508.7,551.7L505.6,540.4L506.7,546.6L504.2,546.2L507.1,550.6L504.8,554.7L501.0,549.3L505.3,558.6L503.2,559.3L504.2,562.8L502.3,567.6L504.0,571.2L499.0,575.9L495.7,573.8L494.2,566.1L487.6,566.0L489.5,562.6L487.2,557.3L484.0,558.4L477.8,547.5L472.4,544.4L472.7,541.4L466.5,542.2L464.1,537.2L469.3,531.4L467.6,525.9L471.8,521.3L475.3,522.6L473.9,517.8L475.2,513.6L481.5,508.8L483.3,510.2Z","세종특별자치시":"M279.4,337.9L292.9,345.6L290.0,353.3L291.7,354.0L292.5,362.4L296.4,366.5L300.5,365.5L301.1,370.0L303.3,370.7L303.9,377.7L298.7,379.0L298.5,384.5L295.5,390.1L287.5,392.9L282.1,387.3L281.7,378.8L279.2,375.5L279.6,369.9L283.0,363.8L277.7,359.1L278.3,344.7L274.8,341.6L279.4,337.9Z","경기도":"M235.3,285.7L236.7,282.7L226.8,268.7L230.5,266.5L225.8,265.9L227.8,260.0L225.7,261.0L224.0,243.4L227.0,242.6L223.7,243.7L239.4,253.1L241.7,242.2L245.1,245.2L228.0,236.3L222.3,238.8L218.4,242.4L225.0,245.8L226.1,258.2L222.9,252.0L216.8,259.4L213.8,243.0L229.9,235.2L235.4,224.5L240.3,225.4L235.9,223.6L239.2,214.9L235.3,209.4L237.7,198.0L243.5,200.3L242.7,211.5L248.3,208.2L251.8,218.4L262.1,212.7L268.5,219.2L277.9,209.1L276.1,205.7L280.5,199.5L279.9,193.4L272.5,197.6L271.6,175.1L264.5,173.1L259.2,184.8L256.3,180.2L251.9,181.9L251.4,192.0L246.7,195.0L241.5,189.4L236.3,193.7L226.5,183.8L223.3,189.8L216.5,190.0L212.2,160.1L227.1,159.5L226.7,149.4L230.1,144.6L227.9,129.9L242.9,121.8L246.9,116.8L247.6,103.9L258.3,99.0L256.5,94.7L259.8,83.7L272.3,74.6L284.2,98.7L290.8,91.2L290.0,101.2L294.6,106.2L305.9,102.7L309.1,120.1L323.5,129.9L323.9,143.3L315.6,151.2L317.6,163.0L313.8,169.7L319.4,169.8L316.9,183.2L323.9,181.6L334.4,192.5L343.2,192.7L348.8,198.7L339.7,206.6L344.2,219.3L339.7,229.7L338.6,255.1L333.1,268.3L326.2,265.8L326.8,275.2L322.8,277.2L323.8,280.4L318.9,285.1L309.8,283.0L300.3,300.8L292.0,303.8L291.5,310.1L276.5,297.0L252.4,308.8L240.0,292.9L240.6,287.6L235.3,285.7Z","강원특별자치도":"M438.8,118.2L454.6,151.3L472.7,177.4L471.7,184.2L478.8,193.8L482.3,207.6L479.7,208.8L493.4,227.6L494.7,237.5L503.6,252.1L504.3,267.3L494.8,272.4L490.1,279.6L491.4,285.6L476.9,275.1L472.9,281.1L459.1,276.5L456.3,284.6L444.4,276.5L441.4,287.4L415.3,270.8L407.9,274.7L403.8,265.3L394.7,269.4L391.5,264.9L398.4,255.8L391.9,256.8L385.7,249.9L368.6,260.0L366.2,250.4L361.5,248.6L356.3,253.8L356.8,264.0L342.6,267.6L338.1,256.5L339.7,229.7L344.2,219.3L339.7,206.6L348.8,198.3L334.4,192.5L323.9,181.6L318.0,184.6L319.2,168.4L313.7,169.1L317.6,163.0L315.8,150.1L323.9,143.3L324.5,132.4L317.7,127.8L317.1,122.2L309.1,120.1L305.9,102.7L294.6,106.2L290.0,101.2L290.8,91.2L284.2,98.7L278.5,81.8L273.4,82.1L271.5,74.5L286.6,65.7L292.4,69.1L300.9,65.0L312.7,71.4L321.0,65.2L342.0,63.0L346.0,70.7L356.8,69.7L364.6,75.5L366.2,68.9L380.5,64.1L393.4,48.2L396.1,21.5L401.0,18.1L426.1,85.8L424.1,89.5L427.4,91.5L427.0,97.5L438.8,118.2Z","충청북도":"M293.6,339.0L304.9,332.8L293.2,316.0L292.0,303.9L300.3,300.8L309.8,283.0L318.9,285.1L323.8,280.4L322.8,277.2L326.8,275.2L326.2,265.8L332.4,269.1L338.1,255.6L342.7,267.8L354.0,266.7L357.5,262.3L356.3,253.8L361.2,248.7L366.2,250.4L368.6,260.0L385.7,249.9L391.9,256.8L398.4,255.8L391.5,264.9L394.7,269.4L403.8,265.3L407.9,274.7L415.3,270.8L431.3,281.0L409.7,304.5L407.9,313.1L410.4,318.0L407.6,324.1L396.8,323.3L389.2,313.8L386.4,324.1L370.5,323.2L367.7,335.0L371.6,341.8L360.1,336.8L357.0,344.6L351.4,346.1L357.1,348.4L356.7,359.6L352.0,350.4L349.8,357.8L343.7,359.7L354.7,375.9L351.6,379.0L350.3,395.2L353.2,400.9L348.1,409.3L349.2,415.5L354.5,410.8L360.3,419.1L367.0,416.5L370.3,427.8L362.1,428.3L364.1,435.6L360.3,450.0L351.7,458.2L340.2,459.9L332.3,451.3L329.5,455.4L322.2,439.2L323.1,425.0L316.7,419.3L312.3,421.6L313.1,404.3L319.2,394.3L313.2,392.6L311.4,381.0L303.0,384.5L303.3,370.7L292.5,362.4L290.0,353.3L293.6,339.0Z","충청남도":"M197.5,360.6L195.9,364.8L197.6,366.1L197.9,373.8L201.2,378.5L200.8,385.0L203.4,387.7L203.0,394.2L199.1,390.3L196.3,391.4L196.4,387.1L193.0,387.0L193.8,376.2L191.1,362.5L195.9,357.9L197.5,360.6ZM230.4,292.1L239.4,296.4L243.0,309.7L247.6,312.5L278.0,297.3L302.8,326.3L304.8,333.3L296.1,334.2L291.0,344.7L278.6,337.3L274.8,341.6L278.3,344.7L277.7,359.1L283.0,363.8L279.2,375.5L282.1,387.3L290.7,391.5L287.0,412.6L295.8,430.7L299.9,415.7L307.0,428.9L316.4,419.4L323.1,425.0L322.2,439.1L327.2,450.4L324.8,461.8L316.5,455.0L313.9,465.4L308.5,464.7L306.3,457.0L302.5,460.2L296.5,439.8L274.3,451.2L268.0,446.9L266.3,437.2L257.3,435.4L250.2,438.5L247.9,451.6L234.7,461.9L227.6,461.3L222.6,448.8L225.2,446.0L217.6,438.1L209.8,439.3L215.3,417.0L210.8,406.0L216.6,402.4L208.3,396.6L213.6,387.1L209.0,384.7L206.7,362.9L196.6,355.5L189.1,362.7L190.0,353.5L185.9,344.1L187.8,338.0L175.0,346.9L176.1,340.3L182.0,339.3L176.2,333.2L171.4,341.8L170.5,330.7L174.0,327.6L174.5,318.2L178.1,323.6L177.2,311.7L179.9,308.3L189.1,308.9L190.0,295.9L193.0,310.6L188.6,326.2L193.7,323.3L193.2,315.3L196.5,321.1L196.5,313.1L203.5,308.9L202.1,302.8L193.3,298.7L199.0,297.3L193.0,294.6L195.7,290.2L205.7,292.3L210.2,281.1L230.4,292.1Z","전북특별자치도":"M261.2,437.0L266.3,437.2L268.0,446.9L274.3,451.2L296.5,439.8L300.4,458.1L306.3,457.0L311.8,465.7L316.7,462.8L316.2,455.0L324.7,461.8L327.4,456.5L325.7,450.5L340.2,459.9L351.7,458.2L355.2,470.6L352.8,476.9L348.1,484.7L338.1,488.4L329.8,502.1L325.4,522.1L326.9,526.8L321.7,537.7L326.2,540.8L327.1,553.8L330.9,556.1L323.8,577.7L310.0,569.8L301.2,580.4L280.8,574.6L272.5,581.0L266.1,577.1L269.0,569.8L264.5,564.8L267.1,559.4L265.3,552.6L255.1,564.8L243.6,549.1L234.8,555.5L236.5,561.1L233.2,569.5L225.3,577.5L219.1,575.7L219.1,580.7L213.5,579.5L208.3,559.4L203.2,558.3L208.9,543.1L220.2,541.9L224.1,534.2L228.5,538.8L226.6,532.1L211.3,533.4L206.3,528.2L206.1,523.5L216.2,513.3L208.6,493.4L217.5,515.2L223.6,504.6L223.9,496.0L231.6,496.5L228.3,480.8L221.9,481.3L222.5,472.2L220.0,470.8L219.5,478.5L213.9,473.2L210.2,489.9L205.2,494.8L213.6,473.5L211.7,466.2L234.7,464.4L235.8,457.6L248.2,451.4L250.4,438.3L261.2,437.0Z","전라남도":"M230.3,734.0L233.9,737.1L238.9,752.8L234.5,749.9L234.8,753.0L230.4,752.0L225.3,745.9L224.7,736.8L230.3,734.0ZM185.0,702.4L190.2,704.7L191.4,709.3L193.9,708.0L197.8,714.6L198.6,720.0L195.8,720.0L196.6,726.4L192.8,734.7L191.9,729.6L191.3,733.7L189.1,732.2L190.9,736.8L188.7,739.8L189.0,735.2L186.3,734.2L186.5,737.5L179.8,738.6L181.1,740.5L177.6,742.4L175.6,739.6L172.4,740.6L173.8,736.2L170.8,736.9L168.2,730.6L168.9,727.7L172.2,726.4L171.0,723.6L176.8,719.3L178.7,714.3L178.4,717.4L180.1,717.5L179.4,715.0L182.0,714.0L180.8,712.2L183.3,710.5L184.8,706.0L183.5,702.5L185.0,702.4ZM250.5,724.2L249.8,730.0L240.0,723.4L239.0,697.5L236.5,721.5L222.3,733.4L221.2,748.1L212.6,751.9L212.4,740.4L206.8,740.2L212.1,731.3L205.9,725.6L208.1,725.2L206.3,711.3L201.7,706.9L198.7,711.2L198.4,706.2L191.3,705.3L185.7,697.7L189.3,694.8L185.3,688.9L188.4,673.0L195.9,683.9L198.2,671.1L205.2,668.7L195.0,666.4L201.4,658.5L197.4,632.0L196.8,645.4L190.6,644.0L189.4,637.7L195.8,634.5L193.2,632.9L199.1,627.7L198.3,623.5L195.3,625.3L191.8,616.8L184.7,629.8L183.0,622.8L175.2,616.4L178.6,612.7L185.7,615.9L185.7,607.5L192.0,610.2L194.6,604.7L193.1,616.0L197.1,621.3L199.3,617.2L199.2,624.5L203.0,627.2L206.8,614.8L195.9,603.1L197.8,595.8L193.8,599.4L194.2,595.5L189.5,593.9L192.9,584.3L197.2,583.5L199.8,569.1L205.1,572.6L200.9,566.9L201.1,558.3L207.9,558.9L212.9,578.5L219.1,580.7L219.1,575.7L225.3,577.5L233.2,569.5L236.5,561.1L234.8,555.5L243.6,549.1L255.1,564.8L265.3,552.6L267.1,559.4L264.5,564.8L269.0,569.8L266.1,577.1L272.5,581.0L280.8,574.6L301.2,580.4L310.0,569.8L320.0,577.7L325.1,599.4L342.4,628.8L339.0,638.3L340.6,643.1L336.7,639.5L327.3,651.6L325.8,648.4L329.1,647.2L321.1,645.6L327.0,661.0L333.0,654.8L341.2,655.5L339.2,676.2L333.4,679.2L329.3,673.3L327.7,681.7L324.7,681.7L328.0,694.9L321.5,690.9L321.3,694.6L318.2,685.8L321.4,683.8L318.0,680.7L322.7,674.5L315.4,664.1L317.4,658.4L314.9,652.4L311.6,658.7L298.1,658.9L305.5,663.2L300.0,675.7L313.7,699.2L311.7,704.2L302.3,702.0L306.7,708.5L305.8,714.7L296.6,718.7L294.7,726.7L287.9,713.2L274.2,711.6L273.4,706.6L285.1,690.5L287.5,680.8L290.6,679.7L290.2,687.1L294.0,688.8L297.1,681.1L295.3,674.0L288.8,677.4L286.5,672.6L280.7,683.7L274.5,682.5L266.4,693.8L257.3,694.6L262.6,698.5L259.6,704.2L262.4,704.9L258.0,717.3L259.5,721.6L250.5,724.2Z","경상북도":"M510.0,310.4L515.9,338.3L509.3,356.3L513.5,375.7L505.4,413.0L505.2,428.6L512.1,445.4L505.2,453.5L513.3,463.4L524.0,447.4L527.0,459.2L520.2,474.0L521.8,484.3L513.1,521.2L503.3,516.4L497.4,522.5L493.2,519.6L493.3,512.8L481.8,508.7L474.9,514.1L475.3,522.6L465.6,528.4L458.3,523.0L445.0,535.5L424.4,532.2L419.4,525.8L418.5,510.8L423.9,506.4L427.2,506.4L428.0,512.4L434.5,509.3L434.4,497.6L438.0,494.8L438.4,486.3L442.3,484.7L440.9,466.6L435.7,459.2L421.1,468.6L418.6,465.3L415.8,481.2L411.0,471.6L405.3,479.0L403.7,487.0L413.9,492.9L407.5,494.3L403.7,502.7L408.7,512.1L400.4,512.2L405.5,523.3L402.5,528.1L395.7,520.5L380.9,520.8L385.4,515.7L385.1,509.7L377.0,492.1L365.5,491.0L352.5,480.1L355.2,470.6L351.7,458.1L360.3,450.0L364.1,435.6L362.1,428.3L370.3,427.8L367.0,416.5L360.3,419.1L354.5,410.8L349.2,415.5L348.1,409.3L353.2,400.9L350.3,395.2L351.6,379.0L354.7,375.9L343.4,360.9L349.8,357.8L352.0,350.4L356.7,359.6L357.1,348.4L351.4,346.1L357.0,344.6L360.1,336.8L371.6,341.8L367.7,335.0L370.5,323.2L386.4,324.1L389.2,313.8L396.8,323.3L407.5,324.1L410.4,318.0L407.9,313.1L409.7,304.5L424.2,284.7L431.4,281.0L441.7,287.4L444.4,276.5L456.3,284.6L459.1,276.5L472.9,281.1L476.9,275.1L491.4,285.6L490.1,279.6L501.8,267.2L511.1,282.2L510.0,310.4ZM663.1,200.2L664.1,209.5L659.4,215.1L651.9,209.9L651.1,203.3L663.1,200.2Z","경상남도":"M354.5,655.5L359.6,664.9L363.3,660.3L371.2,662.7L369.6,666.4L370.1,675.0L367.8,678.7L370.5,681.2L366.3,682.4L365.9,678.7L359.9,681.2L359.1,669.6L354.4,671.7L354.7,678.1L349.7,678.0L347.4,673.3L349.7,669.8L344.6,656.7L346.5,648.4L350.2,648.6L349.1,646.1L351.1,641.7L356.7,641.9L356.7,650.2L354.2,651.5L354.5,655.5ZM433.5,668.1L429.8,671.9L433.7,677.8L428.7,676.5L429.8,681.5L423.5,682.3L426.7,677.4L423.4,676.1L425.7,669.7L421.3,671.5L422.7,668.1L420.1,670.0L419.6,667.9L424.3,666.2L424.8,657.8L418.1,660.3L416.8,664.3L412.8,653.5L418.5,644.8L422.7,649.1L423.6,645.8L425.9,646.4L428.4,650.2L424.7,639.9L426.6,636.9L431.0,639.1L432.0,632.2L434.3,633.6L432.8,630.5L434.0,624.9L438.2,628.6L435.5,632.6L439.0,641.0L435.7,652.4L437.2,654.1L438.2,649.7L441.6,649.8L440.7,654.2L438.6,654.8L439.8,658.4L436.4,659.1L438.3,659.3L440.3,668.0L437.2,666.6L437.2,663.7L435.2,666.3L433.4,663.4L433.5,668.1ZM411.7,616.6L413.5,618.5L401.7,623.9L404.3,628.9L412.5,619.0L411.5,623.9L415.7,628.3L412.2,633.9L406.1,632.8L409.9,635.6L407.6,653.4L409.5,646.5L413.1,650.5L409.0,659.3L404.6,660.8L402.3,657.3L407.4,654.7L394.9,648.8L400.7,647.4L397.2,638.1L392.4,648.9L389.6,641.4L384.6,642.5L385.1,649.8L378.0,650.8L374.9,648.8L376.8,644.9L370.0,643.9L367.4,639.0L369.9,617.9L366.4,627.0L365.4,623.3L361.9,626.2L366.2,630.1L365.2,634.8L358.3,635.4L356.4,629.4L353.8,639.2L348.0,638.1L343.8,644.9L339.6,637.5L342.5,630.0L340.5,623.3L325.6,600.4L320.9,581.4L330.9,556.1L327.1,553.8L326.2,540.8L321.7,537.7L326.9,526.8L325.4,522.1L330.1,501.2L338.1,488.4L348.1,484.7L352.5,477.3L356.7,486.5L377.0,492.1L385.1,509.7L385.4,515.7L380.9,520.8L400.2,522.0L403.6,528.8L416.2,523.2L418.7,515.8L419.4,525.8L424.4,532.2L442.1,535.4L451.0,531.7L454.8,523.9L460.9,524.0L469.3,527.6L464.0,536.7L466.4,542.1L472.7,541.4L489.4,561.9L485.3,572.1L479.1,569.1L478.3,579.7L468.4,585.3L466.4,592.1L454.6,596.2L454.3,606.1L445.9,604.9L450.9,612.6L447.6,618.6L444.9,618.6L445.3,612.6L442.7,621.7L440.7,614.9L435.6,615.3L435.3,606.8L432.7,611.7L430.8,606.3L426.6,608.4L424.8,598.0L429.2,594.5L422.3,600.1L425.7,607.7L423.1,609.3L428.8,617.7L426.2,619.1L429.5,620.1L423.2,622.7L425.6,620.0L422.1,620.4L424.2,616.3L419.5,611.3L411.7,616.6Z","제주특별자치도":"M234.0,876.3L234.0,876.3L234.0,876.3L234.0,876.3L234.0,876.2L234.0,876.3ZM251.6,884.0L251.7,889.7L253.8,894.1L255.1,890.2L256.1,893.4L253.7,895.3L255.2,898.6L253.1,897.8L252.1,905.0L248.5,908.3L244.9,919.0L238.9,919.4L235.3,924.3L226.6,925.0L220.6,931.7L212.5,930.6L207.9,933.6L206.0,930.5L192.7,930.6L189.7,933.7L189.3,938.1L187.0,938.5L175.6,922.1L176.4,912.8L191.2,891.7L209.8,883.0L224.2,880.5L225.2,877.1L227.5,879.3L237.6,875.4L244.0,876.5L245.4,880.9L251.6,884.0Z"},"labels":{"서울특별시":{"short":"서울","x":259.5,"y":187.9},"부산광역시":{"short":"부산","x":488.7,"y":611.3},"대구광역시":{"short":"대구","x":432.1,"y":487.8},"인천광역시":{"short":"인천","x":213.5,"y":220.6},"광주광역시":{"short":"광주","x":242.6,"y":612.7},"대전광역시":{"short":"대전","x":309.2,"y":418.5},"울산광역시":{"short":"울산","x":514.9,"y":540.4},"세종특별자치시":{"short":"세종","x":285.4,"y":390.5},"경기도":{"short":"경기","x":332.9,"y":235.9},"강원특별자치도":{"short":"강원","x":380.3,"y":152.4},"충청북도":{"short":"충북","x":337.6,"y":320.1},"충청남도":{"short":"충남","x":231.2,"y":381.9},"전북특별자치도":{"short":"전북","x":277.4,"y":510.0},"전라남도":{"short":"전남","x":260.8,"y":654.3},"경상북도":{"short":"경북","x":455.6,"y":378.4},"경상남도":{"short":"경남","x":386.2,"y":553.6},"제주특별자치도":{"short":"제주","x":213.6,"y":886.7}},"vb":[0,0,780,980]};
+let growth=0;
+const W = {G:0.45,P:0.35,R:0.20};
+const COLORS=[{max:20,c:"#A7F3D0",l:"안전",b:"b-o"},{max:40,c:"#6EE7B7",l:"관심",b:"b-o"},{max:60,c:"#FCD34D",l:"주의",b:"b-w"},{max:80,c:"#FB923C",l:"경계",b:"b-m"},{max:101,c:"#F87171",l:"위험",b:"b-d"}];
+const meta=s=>COLORS.find(x=>s<x.max)||COLORS[COLORS.length-1];
+const LNG0=124.45,LNG1=132.05,LAT0=32.95,LAT1=38.72,VW=780,VH=980;
+function xy(lng,lat){return [((lng-LNG0)/(LNG1-LNG0))*VW, ((LAT1-lat)/(LAT1-LAT0))*VH];}
+
+function grown(p){
+  if(p._gap0==null){ p._gap0=p.gap; p._peak0=p.peak; p._res0=p.res; }
+  const g=growth/100;
+  return {gap:p._gap0*(1+g*0.85), peak:p._peak0*(1+g*0.45), res:p._res0};
+}
+function recomputeAll(){
+  const pts=[];
+  Object.values(DATA).forEach(S=>{ pts.push(S); S.children.forEach(c=>pts.push(c)); });
+  const keys=["gap","peak","res"];
+  const min={},max={};
+  keys.forEach(k=>{
+    const arr=pts.map(p=>Number(grown(p)[k])||0);
+    min[k]=Math.min.apply(null,arr); max[k]=Math.max.apply(null,arr);
+  });
+  function n(v,k){const d=max[k]-min[k]; return d?(v-min[k])/d:0.5;}
+  pts.forEach(p=>{
+    const x=grown(p);
+    const nG=n(x.gap,"gap"), nP=n(x.peak,"peak"), nR=n(x.res,"res");
+    const Sp=W.G*nG+W.P*nP+W.R*nR;
+    p._nG=nG; p._nP=nP; p._nR=nR; p._C=Sp;
+    p.score=Math.round(Sp*1000)/10;
+    p.gap=Math.round(x.gap*1000)/1000;
+    p.peak=Math.round(x.peak*1000)/1000;
+  });
+}
+recomputeAll();
+
+function sggFlat(){
+  const a=[];
+  Object.entries(DATA).forEach(([sid,S])=>{
+    S.children.forEach((c,i)=>a.push(Object.assign({},c,{id:sid+"_"+i,sido:sid,parent:S.name,type:"sgg"})));
+  });
+  return a;
+}
+function sidoFlat(){
+  return Object.entries(DATA).map(([sid,S])=>Object.assign({},S,{id:sid,sido:sid,type:"sido"}));
+}
+
+let map=null, sidoOverlays=[], sggOverlays=[];
+let curFilter="all", curSido=null, curDet=null, chartC=null;
+let sggVisible=false, useKakao=false;
+let svgView=[0,0,VW,VH];
+
+function passFilter(score){
+  if(curFilter==="high") return score>=60;
+  if(curFilter==="mid") return score>=40 && score<60;
+  if(curFilter==="low") return score<40;
+  return true;
+}
+
+function showErr(msg){
+  const el=document.getElementById("map-err");
+  if(!msg){el.style.display="none";el.textContent="";return;}
+  el.style.display="block"; el.textContent=msg;
+}
+
+function clearOverlays(arr){
+  arr.forEach(o=>{ try{ o.setMap(null); }catch(e){} });
+  arr.length=0;
+}
+
+function makePin(color, size){
+  const el=document.createElement("div");
+  el.className="pin";
+  el.style.background=color;
+  el.style.width=size+"px";
+  el.style.height=size+"px";
+  return el;
+}
+
+function placeSidoKakao(){
+  if(!map || !window.kakao) return;
+  clearOverlays(sidoOverlays);
+  sidoFlat().forEach(d=>{
+    const pos=new kakao.maps.LatLng(d.lat,d.lng);
+    const lb=document.createElement("div");
+    lb.className="lbl full";
+    lb.textContent=d.short || d.name;
+    lb.title=d.name;
+    lb.onclick=function(){ showSido(d.sido); };
+    const ov=new kakao.maps.CustomOverlay({position:pos,content:lb,yAnchor:0.5,xAnchor:0.5,zIndex:2});
+    ov.setMap(map);
+    sidoOverlays.push(ov);
+  });
+}
+
+function placeSggKakao(onlySido){
+  if(!map || !window.kakao) return;
+  clearOverlays(sggOverlays);
+  const list=sggFlat().filter(d=> !onlySido || d.sido===onlySido);
+  list.forEach(d=>{
+    if(!passFilter(d.score)) return;
+    const m=meta(d.score);
+    const wrap=document.createElement("div");
+    wrap.style.cssText="display:flex;flex-direction:column;align-items:center;pointer-events:auto;cursor:pointer";
+    const pin=makePin(m.c, 12);
+    const lab=document.createElement("div");
+    lab.className="lbl";
+    lab.style.marginTop="3px";
+    lab.style.fontSize="10px";
+    lab.textContent=d.name;
+    lab.title=d.name+" "+d.score.toFixed(1);
+    wrap.appendChild(pin); wrap.appendChild(lab);
+    wrap.onclick=function(){ showDet(d,d.sido,false); };
+    const ov=new kakao.maps.CustomOverlay({
+      position:new kakao.maps.LatLng(d.lat,d.lng),
+      content:wrap,yAnchor:0.15,xAnchor:0.5,zIndex:3
+    });
+    ov.setMap(map);
+    sggOverlays.push(ov);
+  });
+  sggVisible=true;
+}
+
+function hideSggKakao(){
+  clearOverlays(sggOverlays);
+  sggVisible=false;
+}
+
+function refreshByZoom(){
+  if(!map || !useKakao) return;
+  const lv=map.getLevel();
+  if(lv<=10 || curSido){
+    placeSggKakao(curSido);
+  } else {
+    hideSggKakao();
+  }
+}
+
+function relayout(){
+  if(map && window.kakao && useKakao){
+    try{ map.relayout(); }catch(e){}
+  }
+}
+
+function pathBBox(d){
+  const nums=d.match(/-?\d+\.?\d*/g)||[];
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for(let i=0;i<nums.length;i+=2){
+    const x=+nums[i], y=+nums[i+1];
+    if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y;
+  }
+  return [minX,minY,maxX,maxY];
+}
+
+function setSvgView(box, pad){
+  pad = pad==null ? 28 : pad;
+  const [x0,y0,x1,y1]=box;
+  const w=Math.max(40,x1-x0), h=Math.max(40,y1-y0);
+  svgView=[x0-pad,y0-pad,w+pad*2,h+pad*2];
+  const svg=document.querySelector("#svg-map svg");
+  if(svg) svg.setAttribute("viewBox", svgView.join(" "));
+}
+
+function drawSvg(){
+  if(useKakao) return;
+  const host=document.getElementById("svg-map");
+  const showSgg=!!curSido;
+  let paths="";
+  Object.entries(MAPMETA.paths).forEach(([name,d])=>{
+    const S=DATA[name]; if(!S) return;
+    const m=meta(S.score);
+    const on=curSido===name;
+    const dim=curSido && !on;
+    paths+='<path class="sido-path'+(on?" active":"")+'" data-s="'+name+'" d="'+d+'" fill="'+(dim?"#E2E8F0":m.c)+'" opacity="'+(dim?.45:1)+'"></path>';
+  });
+  let labs="";
+  Object.entries(MAPMETA.labels).forEach(([name,lb])=>{
+    if(curSido && curSido!==name) return;
+    const short=lb.short;
+    const fs = short.length>=3 ? " sm" : "";
+    labs+='<text class="sido-lab'+fs+'" x="'+lb.x+'" y="'+lb.y+'" text-anchor="middle" dominant-baseline="middle">'+short+'</text>';
+  });
+  let dots="";
+  if(showSgg){
+    sggFlat().filter(d=>d.sido===curSido).forEach(d=>{
+      if(!passFilter(d.score)) return;
+      const [x,y]=xy(d.lng,d.lat);
+      const m=meta(d.score);
+      const on=curDet && curDet.name===d.name;
+      dots+='<g class="sgg-hit" data-sid="'+d.sido+'" data-name="'+d.name+'" style="cursor:pointer">';
+      dots+='<circle class="sgg-dot" cx="'+x+'" cy="'+y+'" r="'+(on?7:4.6)+'" fill="'+m.c+'"></circle>';
+      dots+='<text class="sgg-lab" x="'+x+'" y="'+(y+13)+'" text-anchor="middle">'+d.name+'</text>';
+      dots+='</g>';
+    });
+  }
+  host.innerHTML='<svg viewBox="'+svgView.join(" ")+'" preserveAspectRatio="xMidYMid meet" role="img">'+paths+dots+labs+'</svg>';
+  host.querySelectorAll(".sido-path").forEach(function(p){
+    p.addEventListener("click", function(){ showSido(p.getAttribute("data-s")); });
+  });
+  host.querySelectorAll(".sgg-hit").forEach(function(g){
+    g.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      const sid=g.getAttribute("data-sid");
+      const name=g.getAttribute("data-name");
+      const hit=(DATA[sid].children||[]).find(c=>c.name===name);
+      if(hit) showDet(hit,sid,false);
+    });
+  });
+}
+
+function setTab(n){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.dataset.t===n));
+  document.getElementById("v-board").style.display=n==="board"?"block":"none";
+  document.getElementById("v-sel").style.display=n==="sel"?"block":"none";
+  document.getElementById("v-det").style.display=(n==="det" && curDet)?"block":"none";
+  document.getElementById("v-met").style.display=n==="met"?"block":"none";
+  document.getElementById("v-valid").style.display=n==="valid"?"block":"none";
+  document.getElementById("v-api").style.display=n==="api"?"block":"none";
+  if(n==="det" && !curDet){ setTab("board"); return; }
+  requestAnimationFrame(relayout);
+}
+
+function showNation(){
+  curSido=null; curDet=null;
+  document.getElementById("nation").style.display="block";
+  document.getElementById("sido-v").style.display="none";
+  setTab("board");
+  setBC();
+  svgView=[0,0,VW,VH];
+  drawSvg();
+  if(useKakao && map){
+    map.setLevel(13);
+    map.setCenter(new kakao.maps.LatLng(36.2,127.8));
+    hideSggKakao();
+    placeSidoKakao();
+  }
+}
+
+function showSido(sid){
+  if(!DATA[sid]) return;
+  curSido=sid; curDet=null;
+  const S=DATA[sid];
+  document.getElementById("nation").style.display="none";
+  document.getElementById("sido-v").style.display="block";
+  document.getElementById("st").textContent=S.name+" · "+S.children.length+"곳";
+  document.getElementById("sa-n").textContent=S.name+" 전체";
+  document.getElementById("sa-s").textContent=S.score.toFixed(1);
+  document.getElementById("sido-all").onclick=function(){ showDet(S,sid,true); };
+  const list=S.children.slice().sort((a,b)=>b.score-a.score);
+  document.getElementById("sgg-l").innerHTML=list.map(function(c,i){
+    const m=meta(c.score);
+    return '<div class="item" data-i="'+i+'"><span class="dotc" style="background:'+m.c+'"></span><span class="nm">'+c.name+'</span><span class="scor">'+c.score.toFixed(1)+'</span></div>';
+  }).join("");
+  document.querySelectorAll("#sgg-l .item").forEach(function(el){
+    el.onclick=function(){ showDet(list[+el.dataset.i],sid,false); };
+  });
+  setTab("sel");
+  setBC();
+  const d=MAPMETA.paths[sid];
+  if(d) setSvgView(pathBBox(d), 36);
+  drawSvg();
+  if(useKakao && map){
+    map.setLevel(9);
+    map.panTo(new kakao.maps.LatLng(S.lat,S.lng));
+    placeSggKakao(sid);
+  }
+}
+
+function showDet(d,sid,isSido){
+  curSido=sid; curDet=d;
+  const m=meta(d.score);
+  document.getElementById("score").textContent=d.score.toFixed(1);
+  const b=document.getElementById("badge"); b.textContent=m.l; b.className="badge "+m.b;
+  document.getElementById("rn").textContent=isSido?d.name:(d.name+" · "+(DATA[sid]?DATA[sid].name:""));
+  document.getElementById("rd").textContent=isSido?"광역 단위 점수입니다.":"기초자치단체 단위 점수입니다.";
+  document.getElementById("mg").textContent=Number(d.gap).toFixed(2);
+  document.getElementById("mp").textContent=Number(d.peak).toFixed(2);
+  document.getElementById("mr").textContent=d.res+"%";
+  document.getElementById("mc").textContent=d._C!=null?(d._C*100).toFixed(1)+"%":"—";
+  setTab("det");
+  setBC();
+  if(!isSido){
+    const pd=MAPMETA.paths[sid];
+    if(pd) setSvgView(pathBBox(pd), 36);
+  }
+  drawSvg();
+  if(useKakao && map){
+    map.setLevel(isSido?10:8);
+    map.panTo(new kakao.maps.LatLng(d.lat,d.lng));
+    if(!isSido) placeSggKakao(sid);
+  }
+  const wG=W.G*(d._nG||0)*100, wP=W.P*(d._nP||0)*100, wR=W.R*(d._nR||0)*100;
+  if(chartC){ try{chartC.destroy();}catch(e){} }
+  const ctx=document.getElementById("cc");
+  if(ctx && window.Chart){
+    chartC=new Chart(ctx,{
+      type:"bar",
+      data:{labels:["G×w","P×w","R×w"],datasets:[{data:[wG,wP,wR],backgroundColor:["#1D4ED8","#3B82F6","#93C5FD"],borderRadius:5,barPercentage:.5}]},
+      options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,animation:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{min:0,max:50,ticks:{font:{size:10}},grid:{color:"#E2E6EB"}},y:{ticks:{font:{size:11}},grid:{display:false}}}}
+    });
+  }
+}
+
+function setBC(){
+  let h='<button type="button" data-l="n">전국</button>';
+  if(curSido && DATA[curSido]) h+=' <span>›</span> <button type="button" data-l="s">'+DATA[curSido].name+'</button>';
+  if(curDet) h+=' <span>›</span> <span style="color:var(--tx);font-weight:600;white-space:nowrap">'+curDet.name+'</span>';
+  const el=document.getElementById("bc");
+  if(!el) return;
+  el.innerHTML=h;
+  el.querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){ if(b.dataset.l==="n") showNation(); if(b.dataset.l==="s") showSido(curSido); };
+  });
+}
+
+function renderBoard(){
+  const all=sggFlat();
+  const urgent=all.filter(d=>d.score>=60).length;
+  const avg=all.reduce((s,d)=>s+d.score,0)/Math.max(all.length,1);
+  const top=all.slice().sort((a,b)=>b.score-a.score);
+  document.getElementById("st-urgent").textContent=urgent;
+  document.getElementById("st-avg").textContent=avg.toFixed(1);
+  document.getElementById("st-top").textContent=top[0]?top[0].name:"—";
+  document.getElementById("st-tops").textContent=top[0]?top[0].score.toFixed(1)+"점":"—";
+  document.getElementById("st-n").textContent=all.length;
+  const counts=[0,0,0,0,0];
+  all.forEach(d=>{
+    if(d.score<20)counts[0]++; else if(d.score<40)counts[1]++;
+    else if(d.score<60)counts[2]++; else if(d.score<80)counts[3]++; else counts[4]++;
+  });
+  const cols=["#A7F3D0","#6EE7B7","#FCD34D","#FB923C","#F87171"];
+  const labs=["안전","관심","주의","경계","위험"];
+  const tot=all.length||1;
+  document.getElementById("gbar").innerHTML=counts.map((c,i)=>'<i style="width:'+(c/tot*100).toFixed(1)+'%;background:'+cols[i]+'"></i>').join("");
+  document.getElementById("gleg").innerHTML=labs.map((l,i)=>'<span><i style="background:'+cols[i]+'"></i>'+l+' '+counts[i]+'</span>').join("");
+  document.getElementById("top8").innerHTML=top.slice(0,8).map(function(d,i){
+    const m=meta(d.score);
+    return '<div class="item" data-sid="'+d.sido+'" data-name="'+d.name+'"><span class="dotc" style="background:'+m.c+'"></span><span class="nm">'+(i+1)+'. '+d.name+' · '+(DATA[d.sido]?DATA[d.sido].short:"")+'</span><span class="scor">'+d.score.toFixed(1)+'</span></div>';
+  }).join("");
+  document.querySelectorAll("#top8 .item").forEach(function(el){
+    el.onclick=function(){
+      const sid=el.dataset.sid;
+      const hit=(DATA[sid].children||[]).find(c=>c.name===el.dataset.name);
+      if(hit) showDet(hit,sid,false);
+    };
+  });
+}
+
+function buildSido(){
+  const entries=Object.entries(DATA).sort((a,b)=>b[1].score-a[1].score);
+  document.getElementById("sido-g").innerHTML=entries.map(function(e){
+    const id=e[0],S=e[1],m=meta(S.score);
+    return '<button type="button" class="sc" data-s="'+id+'"><b>'+S.name+'</b><span>'+S.children.length+'개 · '+S.score.toFixed(1)+'</span></button>';
+  }).join("");
+  document.querySelectorAll("#sido-g .sc").forEach(function(el){
+    el.onclick=function(){ showSido(el.dataset.s); };
+  });
+}
+
+function enableKakaoUI(on){
+  useKakao=on;
+  document.getElementById("svg-map").style.display=on?"none":"block";
+  document.getElementById("map").style.display=on?"block":"none";
+  document.getElementById("live-t").textContent=on?("카카오맵 · "+sggFlat().length+"개"):("전국 지도 · "+sggFlat().length+"개");
+  document.getElementById("dot").classList.toggle("on", true);
+}
+
+function initMap(key){
+  showErr("");
+  const old=document.getElementById("ks"); if(old) old.remove();
+  const s=document.createElement("script");
+  s.id="ks";
+  s.src="https://dapi.kakao.com/v2/maps/sdk.js?appkey="+encodeURIComponent(key)+"&autoload=false";
+  s.onload=function(){
+    if(!window.kakao || !kakao.maps){
+      showErr("SDK는 불러왔지만 kakao.maps가 없습니다. JavaScript 키를 확인하세요.");
+      return;
+    }
+    kakao.maps.load(function(){
+      try{
+        enableKakaoUI(true);
+        map=new kakao.maps.Map(document.getElementById("map"),{
+          center:new kakao.maps.LatLng(36.2,127.8),
+          level:13
+        });
+        placeSidoKakao();
+        kakao.maps.event.addListener(map,"zoom_changed",function(){ refreshByZoom(); });
+        if(curSido) showSido(curSido); else showNation();
+        requestAnimationFrame(relayout);
+        try{ localStorage.setItem("kakao_js_key", key); }catch(e){}
+      }catch(err){
+        enableKakaoUI(false);
+        drawSvg();
+        showErr("카카오맵 초기화 실패. Web 도메인 등록을 확인하세요. 기본 지도를 유지합니다.");
+      }
+    });
+  };
+  s.onerror=function(){
+    enableKakaoUI(false);
+    drawSvg();
+    showErr("카카오 스크립트를 불러오지 못했습니다. 키·도메인을 확인하세요.");
+  };
+  document.head.appendChild(s);
+}
+
+function connectKakao(){
+  const k=(document.getElementById("kk").value||document.getElementById("kk2").value||"").trim();
+  if(!k){ showErr("JavaScript 키를 입력하세요."); return; }
+  initMap(k);
+}
+
+document.getElementById("bk").onclick=connectKakao;
+document.getElementById("bk2").onclick=connectKakao;
+document.getElementById("btn-home").onclick=function(){ showNation(); };
+document.getElementById("bb").onclick=function(){ if(curSido) showSido(curSido); else showNation(); };
+document.querySelectorAll(".tab").forEach(function(t){ t.onclick=function(){ setTab(t.dataset.t); }; });
+document.querySelectorAll("#filters button").forEach(function(btn){
+  btn.onclick=function(){
+    document.querySelectorAll("#filters button").forEach(function(x){x.classList.remove("active");});
+    btn.classList.add("active");
+    curFilter=btn.dataset.f;
+    drawSvg();
+    if(useKakao && (sggVisible || curSido)) placeSggKakao(curSido);
+  };
+});
+document.querySelectorAll("#growth button").forEach(function(btn){
+  btn.onclick=function(){
+    document.querySelectorAll("#growth button").forEach(function(x){x.classList.remove("active");});
+    btn.classList.add("active");
+    growth=+btn.dataset.g;
+    recomputeAll();
+    renderBoard();
+    buildSido();
+    if(curDet && curSido){
+      const S=DATA[curSido];
+      const isSido=curDet===S || curDet.name===S.name;
+      const d=isSido?S:(S.children||[]).find(c=>c.name===curDet.name)||curDet;
+      showDet(d,curSido,isSido);
+    } else if(curSido) showSido(curSido);
+    else { drawSvg(); }
+  };
+});
+document.getElementById("q").addEventListener("keydown",function(e){
+  if(e.key!=="Enter") return;
+  const q=e.target.value.trim();
+  if(!q) return;
+  const hit=sggFlat().find(d=>d.name.indexOf(q)!==-1) || sidoFlat().find(d=>d.name.indexOf(q)!==-1||(d.short&&d.short.indexOf(q)!==-1));
+  if(!hit){alert("검색 결과가 없습니다.");return;}
+  if(hit.type==="sido") showSido(hit.sido);
+  else showDet(hit,hit.sido,false);
+});
+window.addEventListener("resize",function(){ requestAnimationFrame(relayout); });
+window.addEventListener("orientationchange",function(){ setTimeout(relayout,250); });
+
+renderBoard();
+buildSido();
+setTab("board");
+drawSvg();
+document.getElementById("live-t").textContent="전국 지도 · "+sggFlat().length+"개";
+
+try{
+  const saved=localStorage.getItem("kakao_js_key");
+  if(saved){
+    document.getElementById("kk").value=saved;
+    document.getElementById("kk2").value=saved;
+    initMap(saved);
+  }
+}catch(e){}
+</script>
+</body>
+</html>

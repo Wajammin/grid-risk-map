@@ -1,0 +1,13 @@
+# 클라우드플레어 페이지스 (https://grid-risk-map.pages.dev)
+# 대시보드 프로젝트 이름과 같게 두세요.
+
+name = "grid-risk-map"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 비밀값은 여기에 적지 않습니다.
+# 대시보드 Settings → Variables and Secrets:
+#   VITE_AUTH_ENABLED = false     (빌드)
+#   NITRO_PRESET      = cloudflare_pages  (빌드)
+#   XAI_API_KEY       = (비밀, 런타임) 챗봇용. 없으면 챗봇만 꺼집니다.

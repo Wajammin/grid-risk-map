@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>배전망 위험 지도 · 발표 5장</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    @page { size: 338.7mm 190.5mm; margin: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Pretendard, "Malgun Gothic", sans-serif; color: #0f172a; }
+    .s {
+      width: 338.7mm; height: 190.5mm;
+      padding: 16mm 18mm;
+      page-break-after: always;
+      display: flex; flex-direction: column;
+      background: #f4f6f8;
+    }
+    .s:last-child { page-break-after: auto; }
+    h1 { font-size: 32pt; margin: 0 0 10mm; letter-spacing: -0.03em; }
+    h2 { font-size: 18pt; margin: 0 0 6mm; }
+    p, li { font-size: 16pt; line-height: 1.45; margin: 0 0 8pt; }
+    .sub { font-size: 18pt; color: #475569; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; flex: 1; }
+    .card { background: #fff; border: 1px solid #e2e6eb; border-radius: 12px; padding: 8mm; }
+    table { width: 100%; border-collapse: collapse; font-size: 13pt; }
+    th, td { border: 1px solid #d1d5db; padding: 6pt 8pt; text-align: left; }
+    th { background: #eef1f4; }
+    img { width: 100%; border: 1px solid #e2e6eb; border-radius: 8px; }
+    .kicker { font-size: 13pt; color: #64748b; letter-spacing: 0.06em; margin-bottom: 6mm; }
+    .big { font-size: 22pt; font-weight: 650; line-height: 1.35; }
+    .foot { margin-top: auto; font-size: 12pt; color: #64748b; }
+  </style>
+</head>
+<body>
+  <section class="s">
+    <p class="kicker">2026 빛가람 AI·ICT 경진대회</p>
+    <h1>배전망 위험 지도</h1>
+    <p class="big">수도관이 가느라면 물을 많이 안 써도 수압이 떨어집니다.<br />전기도 같습니다.</p>
+    <p class="sub" style="margin-top:8mm">전기를 많이 쓰는 곳이 아니라,<br /><strong>변압기가 수요를 버티지 못하는 곳</strong>을 먼저 봅니다.</p>
+    <p class="foot">점수는 고장 확률이 아닙니다. 점검 줄의 순서입니다.</p>
+  </section>
+
+  <section class="s">
+    <h1>질문을 바꿨습니다</h1>
+    <div class="grid">
+      <div class="card">
+        <h2>다른 작품</h2>
+        <p>내일 전기를 얼마나 쓸까?</p>
+        <p>나라 전체 숫자가 빠듯한가?</p>
+      </div>
+      <div class="card">
+        <h2>우리</h2>
+        <p>이 동네 변압기가 받을 수 있나?</p>
+        <p>시·군·구 229곳을 같은 식으로 줄을 세운다.</p>
+      </div>
+    </div>
+    <p class="foot">규칙 기반 AI가 점수를 보고 이유를 한글로 말합니다. 사고를 맞히는 AI가 아닙니다.</p>
+  </section>
+
+  <section class="s">
+    <h1>실제로 돌아갑니다</h1>
+    <img src="intro-assets/01-board.png" alt="전국 상황판" />
+    <p class="foot">전국 지도 + 상황판. 시·도를 누르면 시·군·구가 열립니다.</p>
+  </section>
+
+  <section class="s">
+    <h1>점수는 세 숫자입니다</h1>
+    <div class="grid">
+      <div class="card">
+        <p><strong>G 격차 45%</strong><br />설비가 수요를 얼마나 빠듯하게 받나</p>
+        <p><strong>P 여름 35%</strong><br />여름에 얼마나 몰아서 쓰나</p>
+        <p><strong>R 주택 20%</strong><br />집이 많은 동네인가</p>
+      </div>
+      <div class="card">
+        <p class="big" style="font-size:18pt">점수 = 100 × (G×0.45 + P×0.35 + R×0.20)</p>
+        <p>수요가 늘면 점수를 다시 계산합니다.</p>
+        <p>100을 넘을 수도 있습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="s">
+    <h1>뉴스 6곳과 비교 · 한계</h1>
+    <table>
+      <thead><tr><th>지역</th><th>사고</th><th>원인</th><th>점수</th><th>순위</th></tr></thead>
+      <tbody>
+        <tr><td>남양주</td><td>370가구</td><td>화재</td><td>99.2</td><td>1</td></tr>
+        <tr><td>광주 동구</td><td>변압기 고장</td><td>설비</td><td>90.2</td><td>6</td></tr>
+        <tr><td>군포</td><td>버스 추돌</td><td>추돌</td><td>87.5</td><td>11</td></tr>
+        <tr><td>대구 달서</td><td>피뢰기</td><td>설비</td><td>84.5</td><td>14</td></tr>
+        <tr><td>인천 연수</td><td>1,900세대</td><td>설비</td><td>81.5</td><td>24</td></tr>
+        <tr><td>인천 남동</td><td>1,200가구</td><td>원인 불충분</td><td>79.3</td><td>33</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:6pt">6곳 모두 상위 20%. 화재·추돌은 “맞혔다”고 세지 않습니다. 변압기 실제 용량은 비공개라 점수는 프로토타입입니다.</p>
+    <p class="foot">한전KDN 배전 점검 순번과 질문이 같습니다. 탄소 몇 톤인지는 모릅니다. 그래서 안 적었습니다.</p>
+  </section>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "배전망 위험 지도",
+      "hasCanvas": true,
+      "bodyTextLen": 530,
+      "bodyTextHash": "9261ea442556d74fc0079b2c871fe7027daa5ca030eaed8a10ab66f5cc752e2a",
+      "bodyTextPrefix": "배전망 위험 지도 설비 용량 대비 부하 · 229개 시·군·구 전국 전체 위험·경계 주의 관심↓ 등급 0–20 안전",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "배전망 위험 지도",
+      "hasCanvas": true,
+      "bodyTextLen": 505,
+      "bodyTextHash": "78839d3030bb5633a77316045042fb3dacf03777d5efd07e58e6da403928b11e",
+      "bodyTextPrefix": "배전망 위험 지도 전국 전체 위험·경계 주의 관심↓ 등급 0–20 안전 20–40 관심 40–60 주의 60–80 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

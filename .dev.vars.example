@@ -1,0 +1,3 @@
+# 로컬 wrangler pages dev 용. 이 파일은 깃에 올리지 마세요.
+# 클라우드플레어 대시보드 → Settings → Variables 에도 같은 이름을 넣습니다.
+XAI_API_KEY=

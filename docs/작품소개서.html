@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>작품소개서 — 배전망 위험 지도</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #fff; color: #0f172a;
+    font-family: "Pretendard", "Malgun Gothic", sans-serif;
+    font-size: 11.5pt; line-height: 1.68; word-break: keep-all;
+  }
+  h1.h-major {
+    font-size: 16.5pt; font-weight: 700; letter-spacing: -0.02em;
+    margin: 0 0 12pt; padding-bottom: 6pt; border-bottom: 1.4pt solid #0f172a;
+    page-break-after: avoid;
+  }
+  h2.h-mid {
+    font-size: 13.5pt; font-weight: 650; margin: 16pt 0 7pt; page-break-after: avoid;
+  }
+  h3 { font-size: 11.5pt; font-weight: 650; margin: 11pt 0 5pt; }
+  p { margin: 0 0 8pt; }
+  li { margin: 2pt 0; }
+  .cover {
+    page-break-after: always; min-height: 250mm;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding-top: 22mm;
+  }
+  .kicker { font-size: 11pt; color: #475569; letter-spacing: 0.06em; }
+  .cover h1 {
+    font-size: 26pt; line-height: 1.22; font-weight: 700;
+    letter-spacing: -0.03em; margin: 10pt 0 8pt; border: 0; padding: 0;
+  }
+  .cover .sub { font-size: 13pt; color: #334155; }
+  .rule { height: 1.5pt; background: #0f172a; width: 38mm; margin: 14pt 0; }
+  .blind {
+    margin-top: 16pt; padding: 9pt 11pt; border: 0.6pt solid #cbd5e1;
+    font-size: 11pt; color: #334155;
+  }
+  nav.toc { page-break-after: always; }
+  nav.toc ol { padding-left: 18pt; }
+  nav.toc li { margin: 2.5pt 0; }
+  section.chap { page-break-before: always; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 7pt 0 12pt;
+    font-size: 10.5pt; page-break-inside: avoid;
+  }
+  th, td {
+    border: 0.5pt solid #cbd5e1; padding: 5.5pt 7pt; vertical-align: top; text-align: left;
+  }
+  th { background: #f1f5f9; font-weight: 650; }
+  .note {
+    background: #f8fafc; border-left: 3pt solid #0f172a;
+    padding: 8pt 10pt; margin: 8pt 0 12pt; font-size: 11pt;
+  }
+  figure { margin: 10pt 0 14pt; page-break-inside: avoid; }
+  figure img { width: 100%; border: 0.5pt solid #e2e8f0; }
+  figcaption { font-size: 9.5pt; color: #475569; margin-top: 4pt; }
+  .arch {
+    display: grid; grid-template-columns: 1fr 16pt 1fr 16pt 1fr;
+    align-items: stretch; margin: 8pt 0 12pt; page-break-inside: avoid;
+  }
+  .box { border: 0.7pt solid #0f172a; padding: 8pt; font-size: 10.5pt; }
+  .box b { display: block; margin-bottom: 4pt; }
+  .arrow { display: flex; align-items: center; justify-content: center; font-size: 14pt; }
+  .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10.5pt; background: #f8fafc; padding: 9pt 11pt;
+    white-space: pre-wrap; border: 0.5pt solid #e2e8f0;
+  }
+  ol.steps { padding-left: 18pt; margin: 6pt 0 10pt; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div>
+    <p class="kicker">2026 빛가람 AI·ICT 경진대회 · 고등부 · 작품소개서</p>
+    <div class="rule"></div>
+    <h1>배전망 위험 지도</h1>
+    <p class="sub">우리 동네 변압기가 전기를 얼마나 버틸 수 있는지 보는 지도</p>
+    <p style="margin-top:16pt;color:#334155">제출 형식: PDF · 분량: 20쪽 이내 · 블라인드 심사용</p>
+    <div class="blind">
+      평가의 공정성을 위해 소속 학교와 이름 등 개인을 알아볼 수 있는 정보는 적지 않았습니다.
+    </div>
+  </div>
+  <div>
+    <table>
+      <tr><th style="width:26%">작품명</th><td>배전망 위험 지도</td></tr>
+      <tr><th>한 줄 정의</th><td>전기 사용량이 많은 곳이 아니라, 설비가 그 수요를 감당하는지 살핀다.</td></tr>
+      <tr><th>분석 단위</th><td>광역 16곳(전남광주 통합) · 시·군·구 229곳</td></tr>
+      <tr><th>점수 식</th><td>100 × (0.45 nG + 0.35 nP + 0.20 nR)</td></tr>
+      <tr><th>점수의 뜻</th><td>고장 확률이 아니라 우선 점검 순서</td></tr>
+      <tr><th>고객</th><td>한전KDN · 지방자치단체</td></tr>
+    </table>
+  </div>
+</div>
+
+<nav class="toc">
+  <h1 class="h-major">1. 목차</h1>
+  <ol>
+    <li>목차</li>
+    <li>개요
+      <ol>
+        <li>작품명</li>
+        <li>작품 개요</li>
+        <li>개발 배경 및 목표</li>
+      </ol>
+    </li>
+    <li>작품의 독창성
+      <ol>
+        <li>기존 사례와의 차별점</li>
+        <li>핵심 아이디어의 참신성</li>
+      </ol>
+    </li>
+    <li>기술 구현 방법
+      <ol>
+        <li>시스템 아키텍처 및 동작 원리</li>
+        <li>기술 스택 및 핵심 알고리즘</li>
+        <li>주요 기능 및 화면 구성</li>
+      </ol>
+    </li>
+    <li>실현 가능성
+      <ol>
+        <li>개발 계획 및 일정</li>
+        <li>기술적·사업적 리스크 및 대응 방안</li>
+        <li>기대 효과 및 사업화 전략</li>
+      </ol>
+    </li>
+    <li>에너지 분야 연계성
+      <ol>
+        <li>에너지 산업 적용 가능성</li>
+        <li>기대 효과</li>
+      </ol>
+    </li>
+    <li>참고 자료</li>
+  </ol>
+  <p class="note">
+    이 소개서는 실제로 만든 누리집을 기준으로 썼습니다. 확인하지 못한 숫자는 지어내지 않았습니다.
+  </p>
+</nav>
+
+<section class="chap">
+  <h1 class="h-major">2. 개요</h1>
+
+  <h2 class="h-mid">2.1 작품명</h2>
+  <p><strong>배전망 위험 지도</strong></p>
+  <p>부제: 우리 동네 변압기가 전기를 얼마나 버틸 수 있는지 보는 지도</p>
+
+  <h2 class="h-mid">2.2 작품 개요</h2>
+  <p>
+    수도관이 가늘면 물을 많이 쓰는 집이 아니어도 수압이 떨어집니다. 전기도 이와 같습니다.
+    전기를 많이 쓰는 도시가 위험한 것이 아니라, 변압기가 수요를 감당하기 빠듯한 동네가 위험합니다.
+  </p>
+  <p>
+    이 작품은 전국 시·군·구의 우선 점검 순서를 한 화면에 올려 주는 누리집입니다.
+    세 지표로 점수를 계산하고, 그 점수를 지도 색으로 보여 주며, 점수가 나온 이유를 한글로 풀어 줍니다.
+    처음에는 전국을 보고, 시·도를 고른 뒤, 시·군·구로 내려갑니다.
+  </p>
+  <table>
+    <tr><th>화면</th><th>하는 일</th></tr>
+    <tr><td>소개</td><td>질문과 방식, 앞날 계획을 읽습니다.</td></tr>
+    <tr><td>전국 상황판</td><td>229곳의 평균, 가장 점수가 높은 곳, 등급 분포, 수요 시나리오를 봅니다.</td></tr>
+    <tr><td>지도</td><td>기본은 색으로 칠한 한반도(컬러맵)입니다. 카카오맵 자바스크립트 키가 있으면 카카오맵으로 바꿉니다.</td></tr>
+    <tr><td>상세</td><td>점수가 나온 이유와 인구, 산업 설명을 함께 봅니다.</td></tr>
+    <tr><td>인공지능</td><td>같은 계산을 말로 읽어 줍니다. 없는 숫자는 지어내지 않습니다.</td></tr>
+    <tr><td>방법 · 출처</td><td>산출 식과 뉴스, 통계의 원문 주소를 열어 둡니다.</td></tr>
+    <tr><td>설명서</td><td>버튼을 누를 때마다 한 장씩 따라갑니다. 자동으로 넘어가지 않습니다.</td></tr>
+  </table>
+  <p>
+    점수의 기본 구간은 0에서 100입니다. 수요를 크게 올리면 100을 넘을 수 있습니다.
+    100을 넘는다고 고장이 난다는 뜻이 아닙니다. 더 먼저 점검하라는 뜻입니다.
+  </p>
+  <figure>
+    <img src="fig/01-board.png" alt="전국 상황판과 색 지도" />
+    <figcaption>그림 1. 처음 화면입니다. 왼쪽은 전국 지도, 오른쪽은 통합 상황판입니다.</figcaption>
+  </figure>
+
+  <h2 class="h-mid">2.3 개발 배경 및 목표</h2>
+  <h3>왜 만들었는가</h3>
+  <p>
+    학생 작품은 “앞으로 전기를 얼마나 쓸까”를 맞히는 경우가 많습니다.
+    그러나 정전 보도를 보면, 큰 도시라는 이유만으로 불이 꺼지지는 않습니다.
+    아파트 변압기가 멈추거나, 여름에 냉방 수요가 한꺼번에 몰리거나, 차량이 전봇대를 들이받는 일이 겹칩니다.
+    문제는 집 가까운 배전 설비에서 시작됩니다.
+  </p>
+  <p>
+    한전KDN은 배전 정보화와 설비 안정을 다루는 회사입니다.
+    이 작품이 묻는 말도 같습니다. “이 설비가 지금 수요를 감당할 수 있는가.”
+  </p>
+  <p>
+    정전 보도 여섯 건을 모아 원인부터 나누었습니다.
+    화재나 추돌처럼 설비 과부하와 다른 사고와, 변압기·피뢰기 등 설비 관련 사고를 한 줄에 넣지 않았습니다.
+  </p>
+  <table>
+    <tr><th>지역</th><th>때</th><th>내용</th><th>이 작품에서의 구분</th></tr>
+    <tr><td>남양주</td><td>2025. 7.</td><td>아파트 지하 주차장 화재, 약 370가구 정전</td><td>외부 원인. 점수 검증에 쓰지 않음</td></tr>
+    <tr><td>군포</td><td>2025. 8.</td><td>버스가 변압기를 들이받음, 2,255세대 정전</td><td>외부 원인. 참고만 함</td></tr>
+    <tr><td>인천 연수</td><td>2026. 5.</td><td>송도·동춘 일대 약 1,900세대 정전</td><td>설비 관련</td></tr>
+    <tr><td>인천 남동</td><td>2025. 7.</td><td>아파트 약 1,200가구 정전, 승강기 갇힘</td><td>설비 관련</td></tr>
+    <tr><td>광주 동구</td><td>2023. 6.</td><td>산수동 아파트 변압기 고장, 약 950세대</td><td>설비 관련</td></tr>
+    <tr><td>대구 달서</td><td>2025. 8.</td><td>피뢰기 파손, 약 2,900세대 정전</td><td>설비 관련. 과부하와 같지는 않음</td></tr>
+  </table>
+
+  <h3>무엇을 하려고 하는가</h3>
+  <ol class="steps">
+    <li>전국 229곳을 같은 기준으로 비교해, 먼저 볼 곳을 한 화면에 둡니다.</li>
+    <li>수요가 늘면 점수가 어떻게 바뀌는지 같은 식으로 다시 계산합니다.</li>
+    <li>숫자가 어디서 왔는지 출처 화면에서 원문으로 돌아가게 합니다.</li>
+    <li>시·군·구 변압기 실제 용량은 공개되어 있지 않다는 사실을 숨기지 않습니다.</li>
+  </ol>
+  <div class="note">
+    하지 않는 일: 정전 시각을 맞히기, 고장 확률을 만들기, 한전 내부 운영 시스템을 대신하기.
+    이 작품이 만드는 것은 우선 점검 순서입니다.
+  </div>
+</section>
+
+<section class="chap">
+  <h1 class="h-major">3. 작품의 독창성</h1>
+
+  <h2 class="h-mid">3.1 기존 사례와의 차별점</h2>
+  <p>독창성은 지표를 많이 넣은 데 있지 않습니다. 질문 자체를 바꾼 데 있습니다.</p>
+  <table>
+    <tr>
+      <th>비교</th>
+      <th>흔한 학생 작품</th>
+      <th>이 작품</th>
+    </tr>
+    <tr>
+      <td>질문</td>
+      <td>어디서 전기를 많이 쓰는가</td>
+      <td>그 전기를 변압기가 감당하는가</td>
+    </tr>
+    <tr>
+      <td>단위</td>
+      <td>전국 한 숫자, 또는 한 집</td>
+      <td>시·도에서 시·군·구 229곳으로 내려감</td>
+    </tr>
+    <tr>
+      <td>인공지능</td>
+      <td>결과를 맞히고 이유는 잘 보이지 않음</td>
+      <td>계산 과정을 한글로 풀어 주는 설명 가능한 인공지능</td>
+    </tr>
+    <tr>
+      <td>검증</td>
+      <td>뉴스에 난 정전을 모두 “맞혔다”고 셈</td>
+      <td>화재·추돌은 외부 원인으로 빼고, 설비 관련만 봄</td>
+    </tr>
+    <tr>
+      <td>데이터</td>
+      <td>없는 자료를 만들어 정확도를 씀</td>
+      <td>없는 숫자는 비움. 변압기 용량을 지어내면 거짓말이 됨</td>
+    </tr>
+    <tr>
+      <td>사업화</td>
+      <td>개인에게 앱을 팔겠다고 먼저 말함</td>
+      <td>한전KDN·지방자치단체 업무 화면. 일반 소비자용 앱이 아님</td>
+    </tr>
+  </table>
+
+  <h2 class="h-mid">3.2 핵심 아이디어의 참신성</h2>
+  <p>
+    점수는 세 부분으로 나뉩니다.
+    <strong>G</strong>는 수요가 설비보다 얼마나 빨리 늘었는지,
+    <strong>P</strong>는 여름에 전력이 얼마나 몰리는지,
+    <strong>R</strong>은 주택이 얼마나 모여 있는지를 나타냅니다.
+  </p>
+  <p>참신하다고 말하는 까닭은 기능을 나열해서가 아니라, 아래 세 가지를 지켰기 때문입니다.</p>
+  <ol class="steps">
+    <li>점수를 확률이라고 부르지 않습니다. 누리집과 대화 창, 이 소개서가 같은 문장을 씁니다.</li>
+    <li>수요를 100%보다 많이 올려도 점수가 100에서 멈추지 않습니다. 모든 지역이 100이면 순서가 사라집니다.</li>
+    <li>남양주 화재와 군포 추돌은 점수가 높아도 “우리 식이 맞았다”고 세지 않습니다. 불이 난 일과 설비가 빠듯한 일은 다른 이야기입니다.</li>
+  </ol>
+  <p>
+    행정 구역 이름은 2026년 광주광역시와 전라남도 통합을 반영해 <strong>전남광주</strong>로 적었습니다.
+    배전 사업소 경계와 같다고 주장하지 않습니다. 주민 등록 인구 공표를 따른 표기입니다.
+  </p>
+  <figure>
+    <img src="fig/00-intro.png" alt="소개 첫 화면" />
+    <figcaption>그림 2. 소개 화면입니다. 지도로 들어가기 전에 질문을 먼저 읽습니다.</figcaption>
+  </figure>
+</section>
+
+<section class="chap">
+  <h1 class="h-major">4. 기술 구현 방법</h1>
+
+  <h2 class="h-mid">4.1 시스템 아키텍처 및 동작 원리</h2>
+  <p>
+    서버에 숨겨 둔 학습 모형은 없습니다. 자료와 계산식이 누리집 안에 있어,
+    심사하는 컴퓨터에서도 같은 점수가 나옵니다.
+  </p>
+  <div class="arch">
+    <div class="box"><b>입력</b>시·군·구 세 지표<br>행정안전부 인구<br>전력 판매 통계<br>수요 증가율<br>선택: 카카오맵 키</div>
+    <div class="arrow">→</div>
+    <div class="box"><b>처리</b>최솟값·최댓값 정규화<br>가중 합산 점수<br>수요 증가 시 G·P 조정<br>한글 설명<br>대화 창</div>
+    <div class="arrow">→</div>
+    <div class="box"><b>출력</b>전국 상황판<br>컬러맵 / 카카오맵<br>상세<br>방법 · 출처<br>설명서</div>
+  </div>
+  <p>처리는 한 방향으로 흐릅니다.</p>
+  <ol class="steps">
+    <li>각 지역의 G, P, R을 읽습니다.</li>
+    <li>전국 최솟값과 최댓값으로 정규화합니다. 아래는 0으로 두고, 최댓값을 넘으면 1보다 커질 수 있게 합니다.</li>
+    <li>0.45, 0.35, 0.20을 곱해 점수를 만듭니다.</li>
+    <li>수요를 g% 올리면 G는 0.85g, P는 0.45g만큼 더 민감하게 움직입니다.</li>
+    <li>상세 화면은 그 숫자를 문장으로 바꿉니다.</li>
+    <li>대화 창도 그 숫자만 읽습니다. 바깥 언어 모형이 멈추면 같은 규칙이 대신 말합니다.</li>
+  </ol>
+  <p>
+    지도는 두 가지입니다. 기본은 색으로 칠한 한반도(컬러맵)입니다.
+    카카오맵 자바스크립트 키와 웹 주소를 등록하면 실제 지도 위에 같은 점수가 올라갑니다.
+    키가 없어도 컬러맵이 남아 시연이 멈추지 않습니다.
+  </p>
+
+  <h2 class="h-mid">4.2 기술 스택 및 핵심 알고리즘</h2>
+  <table>
+    <tr><th>구분</th><th>선택</th><th>이유</th></tr>
+    <tr><td>언어</td><td>TypeScript</td><td>식과 화면이 같은 파일을 보게 하려고</td></tr>
+    <tr><td>화면</td><td>React</td><td>지도와 표를 한 페이지에서 바꾸려고</td></tr>
+    <tr><td>지도</td><td>컬러맵과 카카오맵</td><td>키가 없어도, 키가 있어도 돌아가게 하려고</td></tr>
+    <tr><td>인공지능</td><td>규칙, 한글 설명, 대화 창</td><td>점수가 나온 이유를 말할 수 있어야 해서</td></tr>
+  </table>
+
+  <h3>점수 식</h3>
+  <div class="mono">G = (1 + 수요 증가) / (1 + 설비 증가)
+P = 7·8월 사용량 / 연평균 월 사용량
+R = 주택이 모인 정도 (판매 비중 %가 아님)
+
+점수 = 100 × (0.45 nG + 0.35 nP + 0.20 nR)
+
+수요가 +g% 늘면
+  G ← G × (1 + 0.85 g)
+  P ← P × (1 + 0.45 g)</div>
+  <p>
+    0.45, 0.35, 0.20은 <strong>우리가 정한 시작값</strong>입니다.
+    전문가 설문으로 얻은 값이 아닙니다. 그래서 이 소개서에 정답 가중치라고 쓰지 않습니다.
+    나중에 지방자치단체나 계절에 맞게 숫자를 바꿀 수 있도록 세 칸으로 나누어 두었습니다.
+  </p>
+  <p>
+    최솟값과 최댓값으로 맞추는 방법은 여러 지표를 한 점수로 묶을 때 자주 씁니다.
+    참고 자료에 경제협력개발기구(OECD) 안내서를 적었습니다.
+  </p>
+
+  <h3>왜 인공지능이라고 부르는가</h3>
+  <p>
+    대회 이름에 인공지능이 들어 있습니다. 그래서 처음부터 무엇을 인공지능으로 할지 정했습니다.
+  </p>
+  <p>
+    전력망에서는 “왜 이 점수가 나왔는지”를 말해야 합니다.
+    이유를 모르는 예측은 사고가 났을 때 설명을 하지 못합니다.
+    우리는 학습으로 정전을 맞히는 모형 대신,
+    <strong>계산 과정을 사람이 읽게 만드는 설명 가능한 인공지능</strong>을 썼습니다.
+  </p>
+  <p>
+    대화 창은 같은 계산을 말로 읽어 줍니다.
+    “남양주시가 위험한 이유”를 물으면 G·P·R과 순위를 말합니다.
+    없는 변압기 용량은 지어내지 않습니다.
+  </p>
+  <div class="note">
+    한전 내부의 시간별 자료가 열리면, 그다음에 이상 징후를 찾는 학습 모형을 붙일 자리는 남겨 두었습니다.
+    지금은 그 자료가 없어 학습하지 않습니다. 없는 학습을 있는 것처럼 말하지 않았습니다.
+  </div>
+
+  <h2 class="h-mid">4.3 주요 기능 및 화면 구성</h2>
+  <p>처음 화면은 전국 상황판과 지도입니다. 위쪽 버튼으로 소개, 인공지능, 설명서, 밝기, 컬러맵과 카카오맵, 전국을 고릅니다.</p>
+  <figure>
+    <img src="fig/03-detail.png" alt="시·군·구 상세 화면" />
+    <figcaption>그림 3. 한 곳을 연 상세 화면입니다. 점수와 이유, 수요 시나리오를 함께 봅니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="fig/04-method.png" alt="방법 화면" />
+    <figcaption>그림 4. 방법 화면입니다. 산출 식과 뉴스 대조, 한계를 한곳에 모아 두었습니다.</figcaption>
+  </figure>
+  <table>
+    <tr><th>화면</th><th>역할</th></tr>
+    <tr><td>상황판</td><td>전국에서 먼저 볼 곳, 등급, 수요 버튼(현재 · +20% · +50% · +100% · +200%)</td></tr>
+    <tr><td>지역</td><td>광역 16곳을 고르고 시·군·구를 찾음</td></tr>
+    <tr><td>상세</td><td>고른 지역의 이유와 인구·산업 설명</td></tr>
+    <tr><td>방법</td><td>심사 요약, 산출 식, 사고 대조</td></tr>
+    <tr><td>출처</td><td>통계와 뉴스의 원문 주소</td></tr>
+  </table>
+  <p>
+    설명서는 사용자 설명서입니다. 첫째, 전국을 봅니다. 둘째, 한 곳을 엽니다. 셋째, 이유를 읽습니다.
+    넷째, 수요를 올려 봅니다. 다섯째, 방법과 출처를 엽니다. 한 장을 읽고 다음을 누릅니다.
+  </p>
+</section>
+
+<section class="chap">
+  <h1 class="h-major">5. 실현 가능성</h1>
+
+  <h2 class="h-mid">5.1 개발 계획 및 일정</h2>
+  <table>
+    <tr><th>단계</th><th>때</th><th>한 일</th><th>상태</th></tr>
+    <tr><td>1. 질문 정하기</td><td>2026. 7.~8.</td><td>설비 중심으로 질문을 바꾸고 보도를 모음</td><td>완료</td></tr>
+    <tr><td>2. 지도 만들기</td><td>2026. 8.~9.</td><td>229곳 지도, 시나리오, 상세, 출처</td><td>완료</td></tr>
+    <tr><td>3. 설명과 시연</td><td>2026. 9.</td><td>설명 인공지능, 대화 창, 설명서, 소개 화면</td><td>완료</td></tr>
+    <tr><td>4. 서류</td><td>2026. 9.</td><td>이 소개서, 화면 갈무리</td><td>진행</td></tr>
+    <tr><td>5. 공개 통계 연결</td><td>이후</td><td>한전 시·군·구 월간 판매량을 식에 직접 연결</td><td>예정</td></tr>
+    <tr><td>6. 실제 변압기 값</td><td>자료가 열리면</td><td>같은 지도에 용량과 부하율을 넣음</td><td>아직 못 함</td></tr>
+  </table>
+  <p>
+    누리집은 지금 바로 돌아갑니다. 변압기 원자료를 넣는 일은 진행하지 않았습니다.
+    그 숫자를 만들면 거짓말이 되므로 만들지 않았습니다.
+  </p>
+
+  <h2 class="h-mid">5.2 기술적·사업적 리스크 및 대응 방안</h2>
+  <table>
+    <tr><th>문제</th><th>영향</th><th>대응</th></tr>
+    <tr>
+      <td>시·군·구 변압기 용량이 공개되어 있지 않음</td>
+      <td>점수가 실측값이 아님</td>
+      <td>시험판이라고 화면에 밝힘. 나중에 같은 칸에 실제 값을 넣도록 칸만 둠</td>
+    </tr>
+    <tr>
+      <td>산업용 전력을 인구에 비례해 나눔</td>
+      <td>공장이 많은 곳이 덜 위험하게 보일 수 있음</td>
+      <td>상세 화면에서 배분값이라고 밝힘</td>
+    </tr>
+    <tr>
+      <td>정전 보도가 6건뿐임</td>
+      <td>통계로 말하기에는 너무 적음</td>
+      <td>맞힌 비율이라고 쓰지 않음. 원인부터 나눔</td>
+    </tr>
+    <tr>
+      <td>가중치를 우리가 정함</td>
+      <td>정답이 아님</td>
+      <td>시작값이라고 씀. 세 칸으로 나누어 나중에 바꿀 수 있음</td>
+    </tr>
+    <tr>
+      <td>카카오맵 키가 없을 수 있음</td>
+      <td>실제 지도가 뜨지 않음</td>
+      <td>컬러맵을 기본으로 두고, 버튼으로 고르게 함</td>
+    </tr>
+  </table>
+
+  <h3>정전 보도 여섯 건을 점수와 나란히 본 결과</h3>
+  <p>수요 증가가 0%일 때 누리집에 나오는 순위입니다. 229곳 기준입니다.</p>
+  <table>
+    <tr><th>지역</th><th>원인</th><th>점수</th><th>순위</th><th>상위</th></tr>
+    <tr><td>남양주시</td><td>외부(화재)</td><td>99.2</td><td>1</td><td>0.4%</td></tr>
+    <tr><td>광주 동구</td><td>설비</td><td>90.2</td><td>6</td><td>2.6%</td></tr>
+    <tr><td>군포시</td><td>외부(추돌)</td><td>87.5</td><td>11</td><td>4.8%</td></tr>
+    <tr><td>대구 달서구</td><td>설비</td><td>84.5</td><td>14</td><td>6.1%</td></tr>
+    <tr><td>인천 연수구</td><td>설비</td><td>81.5</td><td>24</td><td>10.5%</td></tr>
+    <tr><td>인천 남동구</td><td>설비</td><td>79.3</td><td>33</td><td>14.4%</td></tr>
+  </table>
+  <p>
+    설비 관련 네 곳은 모두 상위 20% 안에 있었습니다.
+    그렇다고 우리 점수가 정전을 맞힌다고 쓰지 않습니다.
+    표본이 6건이라 통계라고 부르기 어렵고, 남양주와 군포는 화재와 추돌이라 식과 인과가 없습니다.
+  </p>
+  <p>
+    이 표가 말하는 바는 하나입니다.
+    설비가 언급된 지역이 우리 지도에서 앞쪽에 보였다는 점입니다.
+    보도가 더 모이면 그때 다시 세겠습니다.
+  </p>
+
+  <h2 class="h-mid">5.3 기대 효과 및 사업화 전략</h2>
+  <p>
+    이 작품의 고객은 일반 소비자가 아닙니다.
+    <strong>한전KDN</strong>과 <strong>지방자치단체</strong>입니다.
+    개인용 앱 장터에 올려 구독료를 받는 상품이 아니라,
+    배전 순시와 과부하 우선 순위를 한 화면에 올리는 <strong>업무용 화면</strong>입니다.
+  </p>
+  <table>
+    <tr><th>누구</th><th>무엇을 쓰는가</th><th>왜 필요한가</th></tr>
+    <tr>
+      <td>한전KDN</td>
+      <td>배전 우선 점검 지도. 이후 배전자동화·관제 화면 옆 모듈</td>
+      <td>현장 순시 순서를 시·군·구로 먼저 고를 수 있음</td>
+    </tr>
+    <tr>
+      <td>지방자치단체</td>
+      <td>우리 지역 설비 상태를 한 장으로 보는 현황판</td>
+      <td>민원과 여름 전력 수요가 몰릴 때 어디를 볼지 설명하기 쉬움</td>
+    </tr>
+    <tr>
+      <td>학교·대회 시연</td>
+      <td>지금 공개 누리집</td>
+      <td>고객에게 보여 주기 전에 동작을 증명하는 시연본</td>
+    </tr>
+  </table>
+  <p>수익은 개인 결제에서 나오지 않습니다. 아래 둘 가운데 하나입니다.</p>
+  <ol class="steps">
+    <li>지방자치단체와 공공기관에 화면을 납품하는 공공 대상(B2G) 라이선스</li>
+    <li>한전KDN이 이미 쓰는 배전자동화 시스템(DAS)과 관제 화면에 붙는 모듈</li>
+  </ol>
+  <p>
+    매출을 억 원 단위로 적지 않습니다. 변압기 원자료가 없는데 견적을 쓰면 거짓말이 됩니다.
+    사업 경로는 있습니다. 누구에게, 어떤 화면으로 들어가는지를 정해 둔 것입니다.
+  </p>
+  <table>
+    <tr><th>단계</th><th>산출물</th><th>조건</th></tr>
+    <tr>
+      <td>1. 지금</td>
+      <td>공개 시험판. 순위, 수요 시나리오, 설명 인공지능</td>
+      <td>공개 통계만 사용. 시연과 설명회용</td>
+    </tr>
+    <tr>
+      <td>2. 다음</td>
+      <td>공공 자료 연결본. 한전 시·군·구 월간 판매량을 식에 직접 연결</td>
+      <td>화면은 그대로 두고 지방자치단체 설명에 쓸 수 있음</td>
+    </tr>
+    <tr>
+      <td>3. 운영</td>
+      <td>변압기 용량과 부하율을 같은 칸에 넣은 운영 화면</td>
+      <td>한전·한전KDN 내부 자료가 열릴 때. 배전자동화 화면 옆 지도</td>
+    </tr>
+  </table>
+  <p>
+    한전 내부 운영 시스템을 지금 당장 대신한다고 쓰지 않습니다.
+    우리가 만든 것은, 그 숫자가 들어오는 순간 같은 지도에 올라가는 화면 틀입니다.
+    사업화의 핵심은 개인용 앱이 아니라 이 화면을 배전 업무에 붙이는 일입니다.
+  </p>
+</section>
+
+<section class="chap">
+  <h1 class="h-major">6. 에너지 분야 연계성</h1>
+
+  <h2 class="h-mid">6.1 에너지 산업 적용 가능성</h2>
+  <p>
+    대상은 송전이 아니라 집 앞 변압기입니다.
+    한전KDN이 매일 하는 일, 곧 배전 점검과 과부하, 여름 전력 수요 관리와 질문이 같습니다.
+  </p>
+  <table>
+    <tr><th>적용 지점</th><th>이 작품이 보여 주는 것</th></tr>
+    <tr><td>배전 순시</td><td>시·군·구 우선 목록</td></tr>
+    <tr><td>지방자치단체 설명</td><td>우리 지역 설비 상태를 한 장으로 보여 줌</td></tr>
+    <tr><td>변압기 증설 검토</td><td>수요 격차가 큰 곳과 여름 수요가 큰 곳을 나눔</td></tr>
+    <tr><td>여름 전력 수요</td><td>P가 큰 곳을 색으로 표시</td></tr>
+    <tr><td>수업 · 시연</td><td>식과 출처가 화면에 있어 속을 열어 보여 줌</td></tr>
+  </table>
+  <p>
+    탄소를 몇 톤 줄인다고 적지 않았습니다. 그 숫자를 이 시험판에서 재면 거짓말이 됩니다.
+  </p>
+
+  <h2 class="h-mid">6.2 기대 효과</h2>
+  <p>지금 셀 수 있는 것만 적습니다.</p>
+  <table>
+    <tr><th>항목</th><th>값</th><th>뜻</th></tr>
+    <tr><td>한 화면에 올린 단위</td><td>시·군·구 229곳</td><td>표 대신 지도 순서</td></tr>
+    <tr><td>수요 가정</td><td>0~200% 버튼, 직접 입력 0~500%</td><td>같은 식으로 다시 계산</td></tr>
+    <tr><td>보도 대조</td><td>6건(설비 관련 4, 외부 원인 2)</td><td>화재와 추돌을 적중으로 치지 않음</td></tr>
+    <tr><td>출처</td><td>행정안전부, 한전, 전력 거래소, 뉴스 주소</td><td>다시 열어 볼 수 있음</td></tr>
+    <tr><td>시연</td><td>설명서 5장</td><td>발표에서 함께 누름</td></tr>
+  </table>
+  <div class="note">
+    그다음 효과는 변압기 값이 공개될 때 다시 쓰겠습니다. 그전까지는 현장에서 바로 쓴다고 말하지 않습니다.
+  </div>
+</section>
+
+<section class="chap">
+  <h1 class="h-major">7. 참고 자료</h1>
+  <p>본문에 나온 공개 자료입니다. 누리집 출처 화면과 같습니다.</p>
+  <ol>
+    <li>행정안전부, 주민등록 인구 및 세대 현황(시·군·구), 2026년 7월. https://jumin.mois.go.kr/</li>
+    <li>한국전력공사, 한국전력통계 제95호(2025년 실적).</li>
+    <li>한국전력공사, 시·군·구별 전력 판매량 월보.</li>
+    <li>한국전력거래소 전력 통계 정보 시스템(EPSIS), 시·도별 용도별 판매 전력량.</li>
+    <li>경제협력개발기구(OECD)·공동연구센터(JRC), Handbook on Constructing Composite Indicators, 2008. (여러 지표를 한 점수로 맞추는 방법 참고)</li>
+    <li>연합뉴스, 남양주 아파트 화재 정전, 2025. 7. 10.</li>
+    <li>연합뉴스, 군포 버스 변압기 추돌, 2025. 8. 12.</li>
+    <li>연합뉴스, 인천 연수 일대 정전, 2026. 5. 22.</li>
+    <li>경기일보, 인천 남동 아파트 정전, 2025. 7. 6.</li>
+    <li>kbc 광주방송, 산수동 아파트 변압기 고장, 2023. 6. 23.</li>
+    <li>연합뉴스, 대구 피뢰기 파손 정전, 2025. 8. 8.</li>
+    <li>카카오맵 자바스크립트 API. https://developers.kakao.com/</li>
+  </ol>
+  <p style="margin-top:16pt">
+    점수는 고장 확률이 아닙니다. 시·군·구 변압기 실제 용량은 공개되어 있지 않아, 그 구간의 값은 시험판입니다.
+  </p>
+</section>
+
+</body>
+</html>
