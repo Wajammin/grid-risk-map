@@ -5,6 +5,7 @@ import { publicUrl } from "@/lib/public-url";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "배전망 위험 지도";
+const isPages = import.meta.env.VITE_PAGES === "true";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -29,24 +30,37 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: publicUrl("/__grok/icon-180.png") },
     ],
   }),
-  component: () => (
-    <html lang="ko" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "(function(){try{var t=localStorage.getItem('grid-theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.style.colorScheme=t;}catch(e){}})();",
-          }}
-        />
-      </head>
-      <body>
-        <PreviewHostBridge />
-        <AuthProvider>
-          <Outlet />
-        </AuthProvider>
-        <Scripts />
-      </body>
-    </html>
-  ),
+  component: isPages
+    ? function PagesRoot() {
+        return (
+          <>
+            <PreviewHostBridge />
+            <AuthProvider>
+              <Outlet />
+            </AuthProvider>
+          </>
+        );
+      }
+    : function StartRoot() {
+        return (
+          <html lang="ko" suppressHydrationWarning>
+            <head>
+              <HeadContent />
+              <script
+                dangerouslySetInnerHTML={{
+                  __html:
+                    "(function(){try{var t=localStorage.getItem('grid-theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.style.colorScheme=t;}catch(e){}})();",
+                }}
+              />
+            </head>
+            <body>
+              <PreviewHostBridge />
+              <AuthProvider>
+                <Outlet />
+              </AuthProvider>
+              <Scripts />
+            </body>
+          </html>
+        );
+      },
 });
