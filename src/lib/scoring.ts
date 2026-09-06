@@ -41,22 +41,55 @@ export function compositeScore(gap: number, peak: number, res: number) {
   };
 }
 
+export const GRADE_RAMP = [
+  { until: 20, name: "안전" as const, color: "#4DA6FF" },
+  { until: 40, name: "관심" as const, color: "#3DDC84" },
+  { until: 60, name: "주의" as const, color: "#E8DE3C" },
+  { until: 80, name: "경계" as const, color: "#F5A02A" },
+  { until: 100, name: "위험" as const, color: "#E4453A" },
+  { until: Infinity, name: "초과" as const, color: "#8B1520" },
+] as const;
+
+/** 범례용. 지도 칸은 단색, 막대만 이 스펙트럼. */
+export const GRADE_SPECTRUM =
+  "linear-gradient(90deg,#4DA6FF 0%,#3ECFFF 12%,#3DDC84 28%,#E8DE3C 45%,#F5A02A 62%,#E4453A 80%,#8B1520 100%)";
+
 export function gradeOf(score: number): Grade {
-  if (score < 20) return "안전";
-  if (score < 40) return "관심";
-  if (score < 60) return "주의";
-  if (score < 80) return "경계";
-  if (score < 100) return "위험";
-  return "초과";
+  return GRADE_RAMP.find((g) => score < g.until)?.name ?? "초과";
 }
 
 export function gradeColor(score: number) {
-  if (score < 20) return "#A7F3D0";
-  if (score < 40) return "#6EE7B7";
-  if (score < 60) return "#FCD34D";
-  if (score < 80) return "#FB923C";
-  if (score < 100) return "#F87171";
-  return "#B91C1C";
+  return GRADE_RAMP.find((g) => score < g.until)?.color ?? "#8B1520";
+}
+
+export function rankOf(sidoId: string, name: string, growth: number) {
+  const { scored } = nationalStats(growth);
+  const i = scored.findIndex((u) => u.sidoId === sidoId && u.name === name);
+  return i < 0 ? null : i + 1;
+}
+
+/** 시·군·구 이름 끝자리로 행정 유형을 가른다. */
+export function adminKind(name: string): "시" | "군" | "구" {
+  if (name.endsWith("구")) return "구";
+  if (name.endsWith("군")) return "군";
+  return "시";
+}
+
+export function rankInKind(sidoId: string, name: string, growth: number) {
+  const kind = adminKind(name);
+  const rows = ALL_SGG.map((u) => applyGrowth(u, growth))
+    .filter((u) => adminKind(u.name) === kind)
+    .sort((a, b) => b.score - a.score);
+  const i = rows.findIndex((u) => u.sidoId === sidoId && u.name === name);
+  return { kind, rank: i < 0 ? null : i + 1, n: rows.length };
+}
+
+export function rankOfSido(sidoId: string, growth: number) {
+  const rows = SIDO_LIST.map((s) => applyGrowth(findUnit(s.id)!, growth)).sort(
+    (a, b) => b.score - a.score,
+  );
+  const i = rows.findIndex((u) => u.sidoId === sidoId);
+  return i < 0 ? null : i + 1;
 }
 
 export function flattenSgg(): Unit[] {

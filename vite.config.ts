@@ -146,6 +146,7 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command, isPreview }) => ({
+  base: process.env.VITE_BASE || "/",
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -173,10 +174,9 @@ export default defineConfig(({ command, isPreview }) => ({
             preset:
               process.env.NITRO_PRESET ||
               (process.env.CF_PAGES ? "cloudflare_pages" : "vercel"),
-            // Auto-registers server/middleware/* (the PWA install page +
-            // manifest + head-tag middleware). Nitro v3 defaults serverDir to
-            // false, so removing this silently unwires /?install=1 on deploys.
-            serverDir: "./server",
+            // GitHub Pages 는 정적만 올린다. 서버 미들웨어(PWA 설치 페이지)는 빼야
+            // prerender 가 깨지지 않는다.
+            serverDir: process.env.NITRO_PRESET === "github_pages" ? false : "./server",
           }),
         ]
       : []),

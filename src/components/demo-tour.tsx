@@ -5,12 +5,14 @@ import { createPortal } from "react-dom";
 const STEPS = [
   {
     n: "1",
-    title: "전국을 본다",
-    look: "오른쪽 상황판의 큰 숫자와 왼쪽 지도 색.",
-    do: "점수는 고장 확률이 아닙니다. 어디를 먼저 보면 좋은지, 점검 순서입니다.",
+    title: "전국을 봅니다",
+    look: "왼쪽은 229개 시군구 지도입니다. 진할수록 먼저 점검할 곳입니다.",
+    do: "점수는 고장 확률이 아닙니다. 점검 순서입니다.",
+    try: "전국으로",
     apply: () => {
       const s = useMapStore.getState();
       s.closeChat();
+      s.setSheet(null);
       s.setFilter("all");
       s.setMapMode("color");
       s.setGrowth(0);
@@ -19,18 +21,21 @@ const STEPS = [
   },
   {
     n: "2",
-    title: "한 곳을 연다",
-    look: "지도를 누르거나 지역 탭에서 시·도를 고릅니다.",
-    do: "예로 남양주시를 열었습니다. 큰 도시라고 앞에 두지 않습니다.",
+    title: "한 곳을 엽니다",
+    look: "검색창에 이름을 넣거나 지도를 누릅니다. 상황판 층 순서는 그대로입니다.",
+    do: "큰 도시라고 앞에 두지 않습니다. 설비가 빠듯한 곳을 엽니다.",
+    try: "가장 위험한 곳 열기",
     apply: () => {
-      useMapStore.getState().selectSgg("경기도", "남양주시");
+      const s = useMapStore.getState();
+      s.selectSgg("경기도", "남양주시");
     },
   },
   {
     n: "3",
-    title: "점수와 이유를 읽는다",
-    look: "상세 탭. 숫자 아래 한글 문장.",
-    do: "학습해서 맞히는 모델이 아닙니다. 격차·피크·주택 세 숫자가 이유를 만듭니다.",
+    title: "이유를 읽습니다",
+    look: "상세 탭. 점수 아래 한글 문장과 전국 n위.",
+    do: "학습 모델이 아닙니다. 격차·피크·주택 세 숫자가 이유를 만듭니다.",
+    try: null,
     apply: () => {
       const s = useMapStore.getState();
       s.selectSgg("경기도", "남양주시");
@@ -39,9 +44,10 @@ const STEPS = [
   },
   {
     n: "4",
-    title: "수요를 올려 본다",
-    look: "상황판·상세에 있는 수요 증가 칸.",
-    do: "전기를 더 쓴다고 가정합니다. 100을 넘을 수 있습니다. 실제 예측이 아니라 가정입니다.",
+    title: "수요를 올려 봅니다",
+    look: "상황판의 수요 단추 또는 직접 입력.",
+    do: "100을 넘어도 고장이 난다는 뜻이 아닙니다. 더 먼저 보라는 뜻입니다.",
+    try: "수요 +50% 넣어 보기",
     apply: () => {
       const s = useMapStore.getState();
       s.selectSgg("경기도", "남양주시");
@@ -52,8 +58,9 @@ const STEPS = [
   {
     n: "5",
     title: "식과 한계",
-    look: "방법 탭, 그다음 출처 탭.",
-    do: "변압기 실제 용량은 공개되어 있지 않습니다. 그 숫자를 만들면 거짓말입니다. 식과 원문은 여기 있습니다.",
+    look: "방법 탭, 이어서 출처 탭.",
+    do: "변압기 실제 용량은 공개되어 있지 않습니다. 그 숫자를 만들면 거짓말입니다.",
+    try: "방법 열기",
     apply: () => {
       useMapStore.getState().setTab("method");
     },
@@ -80,7 +87,8 @@ export function DemoTour() {
 
   useEffect(() => {
     if (!open) return;
-    STEPS[i]?.apply();
+    // 첫 장만 전국으로 맞춰 두고, 나머지는 '해보기'를 눌러야 움직입니다.
+    if (i === 0) STEPS[0].apply();
   }, [open, i]);
 
   function start() {
@@ -117,6 +125,15 @@ export function DemoTour() {
                 {step.look}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.do}</p>
+              {step.try && (
+                <button
+                  type="button"
+                  onClick={() => step.apply()}
+                  className="mt-3 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  해보기 · {step.try}
+                </button>
+              )}
               <div className="mt-5 flex items-center justify-between gap-2">
                 <button
                   type="button"

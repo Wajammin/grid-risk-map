@@ -83,14 +83,8 @@ export function GridChat() {
         AI
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end sm:p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px]"
-            aria-label="닫기"
-            onClick={closeChat}
-          />
-          <div className="glass relative flex h-[min(88dvh,640px)] w-full flex-col rounded-t-2xl sm:h-[min(80dvh,620px)] sm:max-w-md sm:rounded-2xl">
+        <div className="pointer-events-none fixed inset-0 z-40">
+          <div className="pointer-events-auto absolute top-14 left-2 flex h-[min(70dvh,560px)] w-[min(22rem,calc(100vw-1rem))] flex-col rounded-2xl border border-border bg-card shadow-2xl sm:top-16">
             <header className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
                 <p className="text-sm font-semibold">배전망 AI</p>

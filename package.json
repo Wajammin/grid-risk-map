@@ -10,6 +10,7 @@
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
     "build:cf": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 VITE_AUTH_ENABLED=false NITRO_PRESET=cloudflare_pages node scripts/with-app-env.mjs vite build",
+    "build:pages": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 VITE_AUTH_ENABLED=false VITE_BASE=/grid-risk-map/ NITRO_PRESET=github_pages node scripts/with-app-env.mjs vite build || true; node scripts/pages-shell.mjs",
     "deploy:cf": "npm run build:cf && npx wrangler pages deploy dist --project-name=grid-risk-map",
     "db:migrate": "node scripts/migrate.mjs",
     "build:dev": "node scripts/with-app-env.mjs vite build --mode development",
@@ -18,7 +19,7 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' src/lib/risk-map.test.js && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview:cf": "npx wrangler pages dev dist --compatibility-flags=nodejs_compat"

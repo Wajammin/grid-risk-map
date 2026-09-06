@@ -1,4 +1,5 @@
 import pathsMeta from "@/data/korea-paths.json";
+import sggMeta from "@/data/sgg-paths.json";
 
 export type KoreaMeta = {
   paths: Record<string, string>;
@@ -8,7 +9,19 @@ export type KoreaMeta = {
   proj: { mx0: number; my1: number; scale: number; pad: number };
 };
 
+export type SggPath = {
+  d: string;
+  cx: number;
+  cy: number;
+  b: [number, number, number, number];
+};
+
 export const KOREA = pathsMeta as unknown as KoreaMeta;
+export const SGG_PATHS = (sggMeta as unknown as { items: Record<string, SggPath> }).items;
+
+export function sggKey(sidoId: string, name: string) {
+  return `${sidoId}|${name}`;
+}
 
 export function projectLngLat(lng: number, lat: number) {
   const { mx0, my1, scale, pad } = KOREA.proj;
@@ -21,33 +34,28 @@ export function projectLngLat(lng: number, lat: number) {
   };
 }
 
-export function viewBoxFor(
-  sidoId: string | null,
-  sgg: { lng: number; lat: number } | null,
+function padBox(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  ratio: number,
 ): [number, number, number, number] {
   const [vx, vy, vw, vh] = KOREA.vb;
+  const pad = Math.max(x1 - x0, y1 - y0) * ratio + 8;
+  x0 = Math.max(vx, x0 - pad);
+  y0 = Math.max(vy, y0 - pad);
+  x1 = Math.min(vx + vw, x1 + pad);
+  y1 = Math.min(vy + vh, y1 + pad);
+  return [x0, y0, Math.max(28, x1 - x0), Math.max(28, y1 - y0)];
+}
+
+export function viewBoxFor(
+  sidoId: string | null,
+  _sgg: { name?: string; lng: number; lat: number } | null,
+): [number, number, number, number] {
   if (!sidoId) return KOREA.vb;
   const b = KOREA.bounds[sidoId];
   if (!b) return KOREA.vb;
-  let [x0, y0, x1, y1] = b;
-  if (sgg) {
-    const p = projectLngLat(sgg.lng, sgg.lat);
-    const span = Math.max(x1 - x0, y1 - y0, 48) * 0.2;
-    x0 = p.x - span;
-    y0 = p.y - span * 0.9;
-    x1 = p.x + span;
-    y1 = p.y + span * 1.1;
-  }
-  const pad = Math.max(x1 - x0, y1 - y0) * (sgg ? 0.18 : 0.16) + 10;
-  x0 -= pad;
-  y0 -= pad;
-  x1 += pad;
-  y1 += pad;
-  x0 = Math.max(vx, x0);
-  y0 = Math.max(vy, y0);
-  x1 = Math.min(vx + vw, x1);
-  y1 = Math.min(vy + vh, y1);
-  const w = Math.max(36, x1 - x0);
-  const h = Math.max(36, y1 - y0);
-  return [x0, y0, w, h];
+  return padBox(b[0], b[1], b[2], b[3], 0.14);
 }

@@ -46,7 +46,11 @@ Score = 100 × (0.45ÑG + 0.35ÑP + 0.20ÑR)
 
 ## 실행
 
-미리보기에서 바로 동작합니다. 카카오맵은 JavaScript 키와 Web 도메인 등록이 있으면 켜집니다. 없으면 컬러맵을 씁니다.
+## 화면에서 보기
+
+GitHub Pages: https://wajammin.github.io/grid-risk-map/
+
+카카오맵은 [카카오 디벨로퍼스](https://developers.kakao.com/) Web 도메인에 `wajammin.github.io` 를 넣어야 켜집니다. 없으면 컬러맵으로 봅니다.
 
 ## 클라우드플레어 공개
 

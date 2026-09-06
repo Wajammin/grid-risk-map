@@ -64,9 +64,66 @@ body {
   }
 }
 
+.risk-map svg {
+  display: block;
+}
+#map-base path {
+  fill: color-mix(in oklab, var(--color-foreground) 28%, transparent);
+  pointer-events: none;
+}
+#map-group path {
+  stroke: #fff;
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+#map-group path.is-hover {
+  stroke: #1c1917;
+  stroke-width: 1.6;
+}
+#map-group path.is-selected {
+  stroke: #1c1917;
+  stroke-width: 1.7;
+}
+.risk-map svg.is-panning path,
+.risk-map svg.is-tweening path {
+  transition: none;
+}
+#map-pin {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 8px));
+}
+#map-pin.is-up .pin-plate {
+  animation: pin-up 280ms ease-out;
+}
+@keyframes pin-up {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+#tooltip {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+}
+.pin-sido {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.72;
+}
+.pin-name { display: inline; }
+.pin-score {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.72;
+  font-weight: 550;
+}
+
 .k-lbl {
-  background: rgba(15, 23, 42, 0.9);
-  color: #fff;
+  background: #fff;
+  color: #0f172a;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.2;
@@ -121,6 +178,62 @@ body {
   box-shadow:
     0 0 0 2px #0f172a,
     0 2px 6px rgba(15, 23, 42, 0.35);
+}
+
+.map-tip {
+  min-width: 7.5rem;
+  max-width: 14rem;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 20px color-mix(in oklab, black 12%, transparent);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.map-pop {
+  min-width: 8.5rem;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--color-card) 88%, transparent);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 10px 28px color-mix(in oklab, black 14%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  text-align: center;
+}
+.pin-plate {
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px color-mix(in oklab, black 18%, transparent);
+}
+.pin-plate span {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.72;
+  font-weight: 550;
+  margin-left: 4px;
+}
+.pin-pole {
+  width: 2px;
+  height: 14px;
+  margin: 0 auto;
+  background: var(--color-foreground);
+  opacity: 0.7;
+}
+.pin-foot {
+  width: 7px;
+  height: 7px;
+  margin: -2px auto 0;
+  border-radius: 50%;
+  background: var(--color-foreground);
+  opacity: 0.35;
 }
 
 .glass {

@@ -6,6 +6,10 @@ import {
   gradeColor,
   gradeOf,
   nationalStats,
+  rankOf,
+  rankOfSido,
+  rankInKind,
+  adminKind,
 } from "@/lib/scoring";
 import { explain } from "@/lib/explain";
 import { ensemblePredict, GROWTH_PRESETS } from "@/lib/predictor";
@@ -14,6 +18,8 @@ import { ThreatAi } from "@/components/threat-ai";
 import { DemandProfile } from "@/components/demand-profile";
 import { SourcesView } from "@/components/sources-view";
 import { ContestBrief } from "@/components/contest-brief";
+import { RegionSearch } from "@/components/region-search";
+import { RankSheet } from "@/components/rank-sheet";
 import { useMapStore } from "@/lib/store";
 import { DEFAULT_KAKAO_JS_KEY } from "@/lib/kakao-key";
 import { cn } from "@/lib/utils";
@@ -31,8 +37,9 @@ const TABS = [
 export function SidePanel() {
   const tab = useMapStore((s) => s.tab);
   const setTab = useMapStore((s) => s.setTab);
+  const setSheet = useMapStore((s) => s.setSheet);
   return (
-    <aside className="glass flex h-full min-h-0 min-w-0 flex-col border-t md:rounded-2xl md:border">
+    <aside className="glass relative flex h-full min-h-0 min-w-0 flex-col border-t md:rounded-2xl md:border">
       <div className="flex h-11 shrink-0 overflow-x-auto border-b border-border sm:h-12">
         {TABS.map((t) => (
           <button
@@ -49,6 +56,16 @@ export function SidePanel() {
             {t.label}
           </button>
         ))}
+      </div>
+      <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
+        <RegionSearch />
+        <button
+          type="button"
+          onClick={() => setSheet("rank")}
+          className="shrink-0 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          전체 순위
+        </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {tab === "board" && <BoardView />}
@@ -68,6 +85,7 @@ export function SidePanel() {
           </div>
         )}
       </div>
+      <RankSheet />
     </aside>
   );
 }
@@ -75,6 +93,7 @@ export function SidePanel() {
 function BoardView() {
   const growth = useMapStore((s) => s.growth);
   const selectSgg = useMapStore((s) => s.selectSgg);
+  const setSheet = useMapStore((s) => s.setSheet);
   const stats = useMemo(() => nationalStats(growth), [growth]);
   const labels = ["안전", "관심", "주의", "경계", "위험", "초과"];
   const cols = ["#A7F3D0", "#6EE7B7", "#FCD34D", "#FB923C", "#F87171", "#B91C1C"];
@@ -123,8 +142,15 @@ function BoardView() {
           </span>
         ))}
       </div>
-      <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mt-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         우선 점검 TOP 8
+        <button
+          type="button"
+          onClick={() => setSheet("rank")}
+          className="text-[11px] font-medium tracking-normal text-primary"
+        >
+          229곳 전체
+        </button>
       </p>
       <ul className="mt-1">
         {stats.scored.slice(0, 8).map((u, i) => (
@@ -389,11 +415,13 @@ function DetailView() {
   const growth = useMapStore((s) => s.growth);
   const selectSido = useMapStore((s) => s.selectSido);
   const selectNation = useMapStore((s) => s.selectNation);
+  const selectSgg = useMapStore((s) => s.selectSgg);
+  const setTab = useMapStore((s) => s.setTab);
 
   if (!sidoId) {
     return (
       <p className="text-sm text-muted-foreground">
-        지도 또는 지역 탭에서 시·군·구를 선택하세요.
+        지도에서 광역을 누르면 그 지역 상태가 열립니다.
       </p>
     );
   }
@@ -408,6 +436,14 @@ function DetailView() {
     { name: "P×w", v: pred.contrib.P },
     { name: "R×w", v: pred.contrib.R },
   ];
+  const sido = SIDO_LIST.find((x) => x.id === sidoId);
+  const kids = sido
+    ? [...sido.children]
+        .map((c) => applyGrowth(findUnit(sido.id, c.name)!, growth))
+        .sort((a, b) => b.score - a.score)
+    : [];
+  const sidoRank = rankOfSido(sidoId, growth);
+  const urgentKids = kids.filter((c) => c.score >= 60).length;
 
   return (
     <div>
@@ -416,9 +452,11 @@ function DetailView() {
         onClick={() => (sggName ? selectSido(sidoId) : selectNation())}
         className="mb-2 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
-        ← 돌아가기
+        ← {sggName ? (sido?.short ?? "광역") : "전국"}
       </button>
-      <p className="text-xs text-muted-foreground">우선점검 점수</p>
+      <p className="text-xs text-muted-foreground">
+        {u.kind === "sido" ? `${u.short ?? u.name}의 상태` : "우선점검 점수"}
+      </p>
       <div className="flex items-baseline gap-2">
         <span className="font-display text-[2rem] leading-none tabular-nums sm:text-hero">
           {u.score.toFixed(1)}
@@ -427,17 +465,78 @@ function DetailView() {
           className="rounded-full px-2 py-0.5 text-xs font-semibold"
           style={{
             background: `${gradeColor(u.score)}33`,
-            color: u.score >= 100 ? "#7F1D1D" : "#9a3412",
+            color: u.score >= 80 ? "#9B2C2C" : "#9a3412",
           }}
         >
           {g}
         </span>
       </div>
       <h2 className="mt-1 text-base font-semibold">
-        {u.name}
+        {u.kind === "sido" ? `${u.short ?? u.name}의 상태` : u.name}
         {u.kind === "sgg" ? ` · ${u.sidoName}` : ""}
       </h2>
+      {u.kind === "sido" && (
+        <p className="mt-1.5 flex flex-wrap gap-1">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+            광역 {sidoRank ?? "—"}위 / {SIDO_LIST.length}
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            시·군·구 {kids.length}곳
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            주의 이상 {urgentKids}곳
+          </span>
+        </p>
+      )}
+      {u.kind === "sgg" && (
+        <p className="mt-1.5 flex flex-wrap gap-1">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+            전국 {rankOf(u.sidoId, u.name, growth) ?? "—"}위
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+            {(() => {
+              const t = rankInKind(u.sidoId, u.name, growth);
+              return `${t.kind} ${t.rank ?? "—"}위 / ${t.n}`;
+            })()}
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            {adminKind(u.name)}
+          </span>
+        </p>
+      )}
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{ex.headline}</p>
+      {u.kind === "sido" && kids.length > 0 && (
+        <section className="mt-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+              우선 볼 시·군·구
+            </p>
+            <button
+              type="button"
+              className="text-[11px] font-medium text-primary"
+              onClick={() => setTab("region")}
+            >
+              전체 목록
+            </button>
+          </div>
+          <ul className="mt-2">
+            {kids.slice(0, 5).map((c) => (
+              <li key={c.name}>
+                <button
+                  type="button"
+                  onClick={() => selectSgg(sidoId, c.name)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted"
+                >
+                  <i className="size-2.5 rounded-full" style={{ background: gradeColor(c.score) }} />
+                  <span className="flex-1 text-left text-sm">{c.name}</span>
+                  <span className="text-[11px] text-muted-foreground">{gradeOf(c.score)}</span>
+                  <span className="text-sm font-semibold tabular-nums">{c.score.toFixed(1)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <DemandProfile unit={base} />
       <GrowthControl />
       <ThreatAi unit={base} growth={growth} />
@@ -498,6 +597,15 @@ function MethodView() {
           <br />→ 수요 g% 로 G·P 증폭
           <br />→ 위협지수 = 로지스틱(점수)
           <br />→ 챗봇은 이 숫자만 인용
+        </p>
+      </section>
+      <section className="rounded-xl bg-muted p-3">
+        <h3 className="font-semibold text-foreground">지도</h3>
+        <p className="mt-1">
+          울릉군(울릉도·독도)은 본토에서 멀어 경계 상자를 키웁니다. 그대로 두면
+          본토가 왼쪽으로 밀리고 화면 오른쪽이 비므로, 서쪽으로 1.15° 당겨
+          그립니다. 동해 위 제자리 근처에 남되 본토와 겹치지 않는 거리이며,
+          <strong className="text-foreground"> 실제 거리가 아닙니다.</strong>
         </p>
       </section>
       <section className="rounded-xl bg-muted p-3">

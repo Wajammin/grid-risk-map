@@ -22,6 +22,9 @@ type State = {
   mapMode: MapMode;
   chatOpen: boolean;
   chatSeed: string | null;
+  sheet: "rank" | null;
+  hover: { sidoId: string; name: string } | null;
+  mobileSnap: "peek" | "half" | "tall";
   setTab: (tab: Tab) => void;
   setFilter: (filter: Filter) => void;
   setGrowth: (growth: number) => void;
@@ -34,6 +37,9 @@ type State = {
   setMapMode: (mode: MapMode) => void;
   openChat: (seed?: string) => void;
   closeChat: () => void;
+  setSheet: (sheet: "rank" | null) => void;
+  setHover: (hover: { sidoId: string; name: string } | null) => void;
+  cycleSnap: () => void;
 };
 
 const ALIAS: Record<string, string> = {
@@ -71,6 +77,9 @@ export const useMapStore = create<State>((set) => ({
   mapMode: "color",
   chatOpen: false,
   chatSeed: null,
+  sheet: null,
+  hover: null,
+  mobileSnap: "half",
   setTab: (tab) => set({ tab }),
   setFilter: (filter) => set({ filter }),
   setGrowth: (growth) => set({ growth: Math.min(500, Math.max(0, Math.round(growth))) }),
@@ -87,7 +96,7 @@ export const useMapStore = create<State>((set) => ({
     set({
       sidoId: id,
       sggName: null,
-      tab: "region",
+      tab: "detail",
       focus: s
         ? { lat: s.lat, lng: s.lng, zoom: 2.15 }
         : { lat: 36.2, lng: 127.8, zoom: 1 },
@@ -97,16 +106,19 @@ export const useMapStore = create<State>((set) => ({
     const id = resolveSido(sidoId);
     const s = SIDO_LIST.find((x) => x.id === id);
     const c = s?.children.find((x) => x.name === name);
-    set({
+    set((state) => ({
       sidoId: id,
       sggName: name,
       tab: "detail",
+      sheet: null,
+      mobileSnap:
+        typeof window !== "undefined" && window.innerWidth < 768 ? "tall" : state.mobileSnap,
       focus: c
         ? { lat: c.lat, lng: c.lng, zoom: 3.2 }
         : s
           ? { lat: s.lat, lng: s.lng, zoom: 2.15 }
           : { lat: 36.2, lng: 127.8, zoom: 1 },
-    });
+    }));
   },
   setKakaoKey: (key) => {
     const next = key?.trim() || null;
@@ -137,4 +149,10 @@ export const useMapStore = create<State>((set) => ({
     })),
   openChat: (seed) => set({ chatOpen: true, chatSeed: seed?.trim() || null }),
   closeChat: () => set({ chatOpen: false, chatSeed: null }),
+  setSheet: (sheet) => set({ sheet }),
+  setHover: (hover) => set({ hover }),
+  cycleSnap: () =>
+    set((s) => ({
+      mobileSnap: s.mobileSnap === "half" ? "tall" : s.mobileSnap === "tall" ? "peek" : "half",
+    })),
 }));

@@ -20,8 +20,21 @@ declare global {
           xAnchor?: number;
           zIndex?: number;
         }) => KakaoOverlay;
+        Polygon: new (opts: {
+          path: KakaoLatLng[] | KakaoLatLng[][];
+          strokeWeight?: number;
+          strokeColor?: string;
+          strokeOpacity?: number;
+          fillColor?: string;
+          fillOpacity?: number;
+          zIndex?: number;
+        }) => KakaoPolygon;
         event: {
-          addListener: (target: KakaoMap, type: string, handler: () => void) => void;
+          addListener: (
+            target: KakaoMap | KakaoPolygon,
+            type: string,
+            handler: () => void,
+          ) => void;
         };
       };
     };
@@ -35,6 +48,10 @@ export type KakaoLatLngBounds = {
   getNorthEast: () => KakaoLatLng;
 };
 export type KakaoOverlay = { setMap: (map: KakaoMap | null) => void };
+export type KakaoPolygon = {
+  setMap: (map: KakaoMap | null) => void;
+  setOptions: (opts: { fillColor?: string; fillOpacity?: number; strokeColor?: string }) => void;
+};
 export type KakaoMap = {
   setCenter: (p: KakaoLatLng) => void;
   panTo: (p: KakaoLatLng) => void;

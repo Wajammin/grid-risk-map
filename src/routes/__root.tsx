@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { publicUrl } from "@/lib/public-url";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "배전망 위험 지도";
@@ -18,14 +19,14 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#0F172A" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/svg+xml", href: publicUrl("/favicon.svg") },
       { rel: "stylesheet", href: appCss },
       {
         rel: "stylesheet",
         href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css",
       },
-      { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+      { rel: "manifest", href: publicUrl("/__grok/manifest.webmanifest") },
+      { rel: "apple-touch-icon", href: publicUrl("/__grok/icon-180.png") },
     ],
   }),
   component: () => (
